@@ -72,7 +72,8 @@ public class Board {
 
         // center horizontally, keep top of board near vertical center
         float startX = (Gdx.graphics.getWidth() - boardWidth) / 2f;
-        float startY = (Gdx.graphics.getHeight() + boardHeight) / 2f;
+        int bottomMargin = 50;
+        float startY = (Gdx.graphics.getHeight() + boardHeight) / 2f + bottomMargin;
 
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {

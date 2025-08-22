@@ -17,8 +17,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
+    private BitmapFont keyboardFont;
 
     private Board board;
+    private Keyboard keyboard;
     private GameManager gameManager;
 
     @Override
@@ -26,9 +28,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
         font = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 48);
+        keyboardFont = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 32);
 
         gameManager = new GameManager();
         board = new Board(gameManager);
+        keyboard = new Keyboard();
 
         Gdx.input.setInputProcessor(this);
     }
@@ -37,6 +41,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     public void render() {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         board.render(batch, shapeRenderer, font);
+        keyboard.render(batch, shapeRenderer, keyboardFont, 1024);
     }
 
     @Override
