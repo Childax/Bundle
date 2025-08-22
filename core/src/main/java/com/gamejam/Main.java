@@ -25,7 +25,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     public void create() {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
-        font = new BitmapFont(); // default font
+        font = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 48);
 
         gameManager = new GameManager();
         board = new Board(gameManager);
