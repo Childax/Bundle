@@ -37,8 +37,8 @@ public class Board {
         }
     }
 
-    public void submitGuess() {
-        if (currentCol < cols) return; // not full row yet
+    public TileState[] submitGuess() {
+        if (currentCol < cols) return null; // not full row yet
 
         StringBuilder guess = new StringBuilder();
         for (int c = 0; c < cols; c++) {
@@ -47,7 +47,7 @@ public class Board {
 
         String guessWord = guess.toString().trim();
         TileState[] result = manager.submitGuess(guessWord);
-        if (result == null) return;
+        if (result == null) return null;
 
         for (int c = 0; c < cols; c++) {
             tiles[currentRow][c].setState(result[c]);
@@ -57,6 +57,7 @@ public class Board {
             currentRow++;
             currentCol = 0;
         }
+        return result;
     }
 
     public Tile getTile(int row, int col) {
@@ -85,6 +86,10 @@ public class Board {
                 tile.render(batch, shapeRenderer, font, x, y, tileSize);
             }
         }
+    }
+
+    public int getCurrentRow() {
+        return currentRow;
     }
 
 }

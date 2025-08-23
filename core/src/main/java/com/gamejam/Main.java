@@ -50,7 +50,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
             char letter = (char) ('A' + (keycode - Input.Keys.A));
             board.typeLetter(letter);
         } else if (keycode == Input.Keys.ENTER) {
-            board.submitGuess();
+            TileState[] result = board.submitGuess();
+            if (result != null) {
+                // get the letters of the submitted row
+                for (int c = 0; c < 5; c++) {
+                    char letter = board.getTile(board.getCurrentRow() - 1, c).getLetter(); // last submitted row
+                    keyboard.updateKeyState(letter, result[c]);
+                }
+            }
         } else if (keycode == Input.Keys.BACKSPACE) {
             board.deleteLetter();
         }

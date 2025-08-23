@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ public class Keyboard {
     private final String[] rows = {
         "QWERTYUIOP",
         "ASDFGHJKL",
-        "↵ZXCVBNM⌫"   // ↵ = Enter, ⌫ = Backspace
+        "ENTERZXCVBNMDEL"   // 1 = Enter, 2 = Backspace
     };
 
     private Map<Character, TileState> keyStates = new HashMap<>();
@@ -44,53 +46,75 @@ public class Keyboard {
         float keyWidth = 48f;
         float keyHeight = 64f;
         float spacing = 8f;
-        float startY = 50f; // bottom margin
+        float startY = 50f;
         GlyphLayout layout = new GlyphLayout();
 
         for (int r = 0; r < rows.length; r++) {
-            String row = rows[r];
-            float rowWidth = row.length() * (keyWidth + spacing) - spacing;
+            String rowStr = rows[r];
+
+            // compute total row width
+            float rowWidth = 0f;
+            for (int i = 0; i < rowStr.length(); i++) {
+                boolean isEnter = r == 2 && i == 0;
+                boolean isDel   = r == 2 && i == rowStr.length() - 3;
+                rowWidth += (isEnter || isDel ? keyWidth*2 : keyWidth) + spacing;
+                if (isEnter) i += 4;
+                if (isDel) i += 2;
+            }
+            rowWidth -= spacing;
             float startX = (screenWidth - rowWidth) / 2f;
+            float xPos = startX;
+            float yPos = startY + (rows.length - 1 - r) * (keyHeight + spacing);
 
-            for (int i = 0; i < row.length(); i++) {
-                char c = row.charAt(i);
+            for (int i = 0; i < rowStr.length(); i++) {
+                boolean isEnter = r == 2 && i == 0;
+                boolean isDel   = r == 2 && i == rowStr.length() - 3;
 
-                float x = startX + i * (keyWidth + spacing);
-                float y = startY + (rows.length - 1 - r) * (keyHeight + spacing);
+                String keyLabel = String.valueOf(rowStr.charAt(i));
+                float thisWidth = keyWidth;
+                if (isEnter) { keyLabel = "ENTER"; thisWidth = keyWidth*2; }
+                if (isDel)   { keyLabel = "DEL"; thisWidth = keyWidth*2; }
 
-                // background color
-                Color color = Color.DARK_GRAY;
-                if (Character.isLetter(c)) {
-                    switch (keyStates.get(c)) {
-                        case CORRECT: color = Color.GREEN; break;
-                        case PRESENT: color = Color.YELLOW; break;
-                        case ABSENT:  color = Color.GRAY; break;
-                        default:      color = Color.DARK_GRAY;
-                    }
+                // key background color
+                Color color;
+                if (keyLabel.length() == 1) {
+                    TileState state = keyStates.get(keyLabel.charAt(0));
+                    if (state == TileState.CORRECT) color = Color.GREEN;
+                    else if (state == TileState.PRESENT) color = Color.YELLOW;
+                    else if (state == TileState.ABSENT) color = Color.GRAY;
+                    else color = Color.DARK_GRAY;
                 } else {
-                    color = Color.LIGHT_GRAY; // Enter/Backspace
+                    color = Color.DARK_GRAY; // ENTER/DEL
                 }
 
-                // draw key background
+                // draw background
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                 shapeRenderer.setColor(color);
-                shapeRenderer.rect(x, y, keyWidth, keyHeight);
+                shapeRenderer.rect(xPos, yPos, thisWidth, keyHeight);
                 shapeRenderer.end();
 
-                // draw key border
+                // draw border
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
                 shapeRenderer.setColor(Color.BLACK);
-                shapeRenderer.rect(x, y, keyWidth, keyHeight);
+                shapeRenderer.rect(xPos, yPos, thisWidth, keyHeight);
                 shapeRenderer.end();
 
-                // draw letter centered
+                // draw label
                 batch.begin();
-                String label = String.valueOf(c);
-                layout.setText(font, label);
-                float textX = x + (keyWidth - layout.width) / 2f;
-                float textY = y + (keyHeight + layout.height) / 2f;
+                float scale = keyLabel.length() > 1 ? 0.7f : 1f;
+                font.getData().setScale(scale);
+                layout.setText(font, keyLabel);
+                float textX = xPos + (thisWidth - layout.width)/2f;
+                float textY = yPos + (keyHeight + layout.height)/2f;
                 font.draw(batch, layout, textX, textY);
+                font.getData().setScale(1f);
                 batch.end();
+
+                xPos += thisWidth + spacing;
+
+                // skip extra letters for multi-letter keys
+                if (isEnter) i += 4;
+                if (isDel) i += 2;
             }
         }
     }

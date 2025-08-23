@@ -54,7 +54,7 @@ public class GameManager {
         }
 
         TileState[] result = WordChecker.checkWord(guess, solution);
-
+        
         if (guess.equals(solution)) {
             System.out.println("You win!");
             gameOver = true;
