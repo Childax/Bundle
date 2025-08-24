@@ -22,6 +22,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     private Board board;
     private Keyboard keyboard;
     private GameManager gameManager;
+    private List<String> solvedWords = new ArrayList<>();
+    private List<TileState[]> solvedWordStates = new ArrayList<>();
 
     @Override
     public void create() {
@@ -50,17 +52,37 @@ public class Main extends ApplicationAdapter implements InputProcessor {
             char letter = (char) ('A' + (keycode - Input.Keys.A));
             board.typeLetter(letter);
         } else if (keycode == Input.Keys.ENTER) {
+            String submittedWord = board.getSubmittedWord();
             TileState[] result = board.submitGuess();
+
             if (result != null) {
-                // get the letters of the submitted row
                 for (int c = 0; c < 5; c++) {
-                    char letter = board.getTile(board.getCurrentRow() - 1, c).getLetter(); // last submitted row
+                    char letter = submittedWord.charAt(c);
                     keyboard.updateKeyState(letter, result[c]);
                 }
+
                 if (gameManager.isStageSolved() && !gameManager.isGameOver()) {
+                    // Store the solved word and its final, correct state
+                    solvedWords.add(submittedWord);
+                    solvedWordStates.add(result);
+
                     if (!gameManager.advanceStage()) return false;
+
                     board.reset();
                     keyboard.reset();
+
+                    int currentStage = gameManager.getCurrentStage();
+                    String currentAnswer = gameManager.getStageWords().get(currentStage);
+
+                    for (int i = 0; i < solvedWords.size(); i++) {
+                        String word = solvedWords.get(i);
+                        TileState[] states = WordChecker.checkWord(word, currentAnswer.toUpperCase());
+                        board.loadSolvedWord(word, states);
+                        for (int c = 0; c < 5; c++) {
+                            keyboard.updateKeyState(word.charAt(c), states[c]);
+                        }
+
+                    }
                 }
             }
         } else if (keycode == Input.Keys.BACKSPACE) {

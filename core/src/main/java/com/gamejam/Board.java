@@ -40,12 +40,7 @@ public class Board {
     public TileState[] submitGuess() {
         if (currentCol < cols) return null; // not full row yet
 
-        StringBuilder guess = new StringBuilder();
-        for (int c = 0; c < cols; c++) {
-            guess.append(tiles[currentRow][c].getLetter());
-        }
-
-        String guessWord = guess.toString().trim();
+        String guessWord = getSubmittedWord();
         TileState[] result = manager.submitGuess(guessWord);
         if (result == null) return null;
 
@@ -58,6 +53,33 @@ public class Board {
             currentCol = 0;
         }
         return result;
+    }
+
+    /**
+     * Gets the word from the current row being submitted.
+     * @return The 5-letter guess string.
+     */
+    public String getSubmittedWord() {
+        StringBuilder guess = new StringBuilder();
+        for (int c = 0; c < cols; c++) {
+            guess.append(tiles[currentRow][c].getLetter());
+        }
+        return guess.toString().trim();
+    }
+
+    /**
+     * Loads a solved word and its tile states directly onto the board.
+     * @param word The solved word string.
+     * @param states The TileState array for that word.
+     */
+    public void loadSolvedWord(String word, TileState[] states) {
+        if (currentRow < rows) {
+            for (int c = 0; c < cols; c++) {
+                tiles[currentRow][c].setLetter(word.charAt(c));
+                tiles[currentRow][c].setState(states[c]);
+            }
+            currentRow++;
+        }
     }
 
     public Tile getTile(int row, int col) {

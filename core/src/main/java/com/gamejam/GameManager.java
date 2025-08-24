@@ -94,6 +94,29 @@ public class GameManager {
         return true;
     }
 
+    public TileState getLetterState(char letter, int guessIndex) {
+        // We'll run a check on the letter, just like WordChecker, but for a single character.
+        String solution = stageWords.get(currentStage);
+
+        // Check for correct position (green).
+        if (letter == solution.charAt(guessIndex)) {
+            return TileState.CORRECT;
+        }
+
+        // Then, check if the letter is present in the word at all (yellow).
+        // This is a simplified check that works for your current WordChecker implementation.
+        if (solution.contains(String.valueOf(letter))) {
+            return TileState.PRESENT;
+        }
+
+        // Otherwise, it's not in the word (gray).
+        return TileState.ABSENT;
+    }
+
+    public TileState[] getGuessState(String guessWord, String solution) {
+        return WordChecker.checkWord(guessWord, solution);
+    }
+
     public boolean isGameOver() {
         return gameOver;
     }
