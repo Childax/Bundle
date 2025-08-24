@@ -92,13 +92,15 @@ public class Board {
         return currentRow;
     }
 
-    public void clear() {
+    public void reset() {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 tiles[r][c].setLetter(' ');
                 tiles[r][c].setState(TileState.EMPTY);
             }
         }
+        this.currentRow = 0;
+        this.currentCol = 0;
     }
 
 }

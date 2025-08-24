@@ -78,14 +78,20 @@ public class GameManager {
         if (guess.equals(solution)) {
             System.out.println("Stage solved!");
             stageSolved = true;
-            currentStage++;
-            if (currentStage >= numStages) {
-                gameOver = true;
-                System.out.println("You win!");
-            }
         }
 
         return result;
+    }
+
+    public boolean advanceStage() {
+        currentStage++;
+        stageSolved = false;
+        if (currentStage >= numStages) {
+            gameOver = true;
+            System.out.println("You win!");
+            return false;
+        }
+        return true;
     }
 
     public boolean isGameOver() {

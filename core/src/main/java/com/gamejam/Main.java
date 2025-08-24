@@ -57,13 +57,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                     char letter = board.getTile(board.getCurrentRow() - 1, c).getLetter(); // last submitted row
                     keyboard.updateKeyState(letter, result[c]);
                 }
+                if (gameManager.isStageSolved() && !gameManager.isGameOver()) {
+                    if (!gameManager.advanceStage()) return false;
+                    board.reset();
+                    keyboard.reset();
+                }
             }
         } else if (keycode == Input.Keys.BACKSPACE) {
             board.deleteLetter();
-        }
-        if (gameManager.isStageSolved()) {
-            board.clear();
-            keyboard.reset();
         }
         return true;
     }
