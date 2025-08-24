@@ -118,5 +118,11 @@ public class Keyboard {
             }
         }
     }
+
+    public void reset() {
+        for (char c = 'A'; c <= 'Z'; c++) {
+            keyStates.put(c, TileState.EMPTY);
+        }
+    }
 }
 

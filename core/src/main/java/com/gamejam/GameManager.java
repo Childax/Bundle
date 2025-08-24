@@ -6,14 +6,19 @@ import com.badlogic.gdx.files.FileHandle;
 import java.util.*;
 
 public class GameManager {
-    private String solution;
+    private List<String> stageWords;
     private Set<String> validWords;
     private List<String> answers;
+    private final int numStages;
+    private int currentStage;
+    private boolean stageSolved;
     private boolean gameOver;
 
-    public GameManager() {
+    public GameManager(int numStages) {
+        this.numStages = numStages;
+        this.currentStage = 0;
         loadWordLists();
-        pickNewSolution();
+        pickNewSolutions();
     }
 
     private void loadWordLists() {
@@ -36,15 +41,30 @@ public class GameManager {
         }
     }
 
-    public void pickNewSolution() {
+    public void pickNewSolutions() {
+        this.stageWords = new ArrayList<>();
         Random r = new Random();
-        solution = answers.get(r.nextInt(answers.size()));
+        for (int i = 0; i < numStages; i++) {
+            String word = answers.get(r.nextInt(answers.size()));
+            while (true) {
+                assert stageWords != null;
+                if (!stageWords.contains(word)) break;
+                word = answers.get(r.nextInt(answers.size()));
+            }
+            stageWords.add(word);
+        }
         gameOver = false;
-        System.out.println("DEBUG: New solution is " + solution); // for testing
+        System.out.println("DEBUG: Words are: ");
+        assert stageWords != null;
+        for (String word : stageWords) {
+            System.out.println(word);
+        }
     }
 
     public TileState[] submitGuess(String guess) {
         if (gameOver) return null;
+
+        String solution = stageWords.get(currentStage);
 
         guess = guess.toLowerCase();
 
@@ -54,10 +74,15 @@ public class GameManager {
         }
 
         TileState[] result = WordChecker.checkWord(guess, solution);
-        
+
         if (guess.equals(solution)) {
-            System.out.println("You win!");
-            gameOver = true;
+            System.out.println("Stage solved!");
+            stageSolved = true;
+            currentStage++;
+            if (currentStage >= numStages) {
+                gameOver = true;
+                System.out.println("You win!");
+            }
         }
 
         return result;
@@ -67,8 +92,16 @@ public class GameManager {
         return gameOver;
     }
 
-    public String getSolution() {
-        return solution;
+    public List<String> getStageWords() {
+        return stageWords;
+    }
+
+    public boolean isStageSolved() {
+        return stageSolved;
+    }
+
+    public int getCurrentStage() {
+        return currentStage;
     }
 }
 

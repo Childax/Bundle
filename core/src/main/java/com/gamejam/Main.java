@@ -30,7 +30,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         font = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 48);
         keyboardFont = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 32);
 
-        gameManager = new GameManager();
+        gameManager = new GameManager(6);
         board = new Board(gameManager);
         keyboard = new Keyboard();
 
@@ -60,6 +60,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
             }
         } else if (keycode == Input.Keys.BACKSPACE) {
             board.deleteLetter();
+        }
+        if (gameManager.isStageSolved()) {
+            board.clear();
+            keyboard.reset();
         }
         return true;
     }
