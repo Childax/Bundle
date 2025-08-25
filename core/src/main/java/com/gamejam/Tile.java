@@ -77,4 +77,13 @@ public class Tile {
             batch.end();
         }
     }
+
+    public static Color getColor(TileState state) {
+        switch (state) {
+            case CORRECT: return Color.GREEN;
+            case PRESENT: return Color.GOLD;
+            case ABSENT:  return Color.DARK_GRAY;
+            default:      return Color.LIGHT_GRAY;
+        }
+    }
 }

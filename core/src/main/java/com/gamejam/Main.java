@@ -41,6 +41,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         GAME_OVER
     }
     private GameState gameState;
+    private boolean isFinalWin = false; // Added to track final win state
 
     // Menu button variables
     private final GlyphLayout layout = new GlyphLayout();
@@ -66,6 +67,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         keyboard = new Keyboard();
         solvedWords.clear();
         solvedWordStates.clear();
+        isFinalWin = false; // Reset the win flag
     }
 
     @Override
@@ -167,10 +169,82 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     }
 
     private void drawHowToPlayScreen() {
+        float centerX = Gdx.graphics.getWidth() / 2f;
+        float centerY = Gdx.graphics.getHeight() / 2f;
+        float tileSize = 64f;
+        float gap = 10f;
+
         batch.begin();
         font.setColor(Color.WHITE);
-        font.draw(batch, "How to play", Gdx.graphics.getWidth() / 2f - 100, Gdx.graphics.getHeight() / 2f + 50);
-        font.draw(batch, "Coming soon!", Gdx.graphics.getWidth() / 2f - 100, Gdx.graphics.getHeight() / 2f - 50);
+
+        // Title
+        String title = "HOW TO PLAY";
+        layout.setText(font, title);
+        font.draw(batch, layout, centerX - layout.width / 2, centerY + 280);
+
+        // Rules text
+        String rule1 = "Your favorite game WORDLE, with a twist!";
+        String rule2 = "Each guess must be a valid 5-letter word.";
+        String rule3 = "The color of the tiles will change to show you how close your guess was.";
+
+        keyboardFont.setColor(Color.WHITE);
+        layout.setText(keyboardFont, rule1);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, centerY + 180);
+        layout.setText(keyboardFont, rule2);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, centerY + 130);
+        layout.setText(keyboardFont, rule3);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, centerY + 80);
+
+        batch.end();
+
+        // Example section
+        float exampleY = centerY - 50;
+        float startX = centerX - 2 * (tileSize + gap);
+
+        // Draw example tiles using ShapeRenderer
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Tile.getColor(TileState.CORRECT));
+        shapeRenderer.rect(startX, exampleY, tileSize, tileSize);
+        shapeRenderer.setColor(Tile.getColor(TileState.EMPTY));
+        shapeRenderer.rect(startX + (tileSize + gap), exampleY, tileSize, tileSize);
+        shapeRenderer.rect(startX + 2 * (tileSize + gap), exampleY, tileSize, tileSize);
+        shapeRenderer.setColor(Tile.getColor(TileState.PRESENT));
+        shapeRenderer.rect(startX + 3 * (tileSize + gap), exampleY, tileSize, tileSize);
+        shapeRenderer.setColor(Tile.getColor(TileState.EMPTY));
+        shapeRenderer.rect(startX + 4 * (tileSize + gap), exampleY, tileSize, tileSize);
+        shapeRenderer.end();
+
+        batch.begin();
+        font.setColor(Color.WHITE);
+
+        // Example letters
+        layout.setText(font, "A");
+        font.draw(batch, "A", startX + (tileSize - layout.width) / 2, exampleY + (tileSize + layout.height) / 2);
+        layout.setText(font, "B");
+        font.draw(batch, "B", startX + (tileSize + gap) + (tileSize - layout.width) / 2, exampleY + (tileSize + layout.height) / 2);
+        layout.setText(font, "C");
+        font.draw(batch, "C", startX + 2 * (tileSize + gap) + (tileSize - layout.width) / 2, exampleY + (tileSize + layout.height) / 2);
+        layout.setText(font, "D");
+        font.draw(batch, "D", startX + 3 * (tileSize + gap) + (tileSize - layout.width) / 2, exampleY + (tileSize + layout.height) / 2);
+        layout.setText(font, "E");
+        font.draw(batch, "E", startX + 4 * (tileSize + gap) + (tileSize - layout.width) / 2, exampleY + (tileSize + layout.height) / 2);
+
+        // Explanation of colors
+        String greenExplanation = "A is in the word and in the correct spot.";
+        String yellowExplanation = "D is in the word but in the wrong spot.";
+        String grayExplanation = "B, C, and E are not in the word.";
+
+        keyboardFont.setColor(Color.WHITE);
+        layout.setText(keyboardFont, greenExplanation);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, exampleY - 50);
+        layout.setText(keyboardFont, yellowExplanation);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, exampleY - 100);
+        keyboardFont.draw(batch, layout, centerX - layout.width / 2, exampleY - 150);
+
+        // Back to menu instruction
+        layout.setText(font, "Press Enter to return to menu");
+        font.draw(batch, layout, centerX - layout.width / 2, centerY - 250);
+
         batch.end();
     }
 
@@ -178,11 +252,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         batch.begin();
         font.setColor(Color.WHITE);
         String message;
-        String solution = gameManager.getStageWords().get(gameManager.getCurrentStage());
-        if (gameManager.isStageSolved()) {
-            message = "You Win!";
+        if (isFinalWin) {
+            message = "YOU WIN! ALL STAGES COMPLETE!";
         } else {
-            message = "You Lose! The word was " + solution.toUpperCase();
+            String solution = gameManager.getStageWords().get(gameManager.getCurrentStage());
+            message = "YOU LOSE! The word was " + solution.toUpperCase();
         }
 
         layout.setText(font, message);
@@ -212,14 +286,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                         keyboard.updateKeyState(letter, result[c]);
                     }
 
-                    // Advance the row regardless of win/loss
-                    board.advanceRow();
-
                     if (gameManager.isStageSolved()) {
                         solvedWords.add(submittedWord);
                         solvedWordStates.add(result);
 
                         if (!gameManager.advanceStage()) {
+                            isFinalWin = true; // Set final win flag
                             gameState = GameState.GAME_OVER;
                         } else {
                             board.reset();
@@ -239,6 +311,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                         }
                     } else if (gameManager.isGameOver()) {
                         gameState = GameState.GAME_OVER;
+                    } else {
+                        // Advance the row only on a valid, non-winning guess
+                        board.advanceRow();
                     }
                 }
             } else if (keycode == Input.Keys.BACKSPACE) {
@@ -246,7 +321,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                 board.deleteLetter();
                 backspaceHoldTimer = 0.0f;
             }
-        } else if (gameState == GameState.GAME_OVER) {
+        } else if (gameState == GameState.GAME_OVER || gameState == GameState.HOW_TO_PLAY) {
             if (keycode == Input.Keys.ENTER) {
                 gameState = GameState.MENU;
             }
