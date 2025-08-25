@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Interpolation;
 
 public class Board {
     private Tile[][] tiles;
@@ -13,12 +14,19 @@ public class Board {
     private int currentCol = 0;
     private GameManager manager;
 
+    // Animation variables
+    private float[][] bounceTimers;
+    private final float JUMP_DURATION = 0.2f;
+    private final float POP_DURATION = 0.1f;
+
     public Board(GameManager manager) {
         this.manager = manager;
         tiles = new Tile[rows][cols];
+        bounceTimers = new float[rows][cols];
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 tiles[r][c] = new Tile();
+                bounceTimers[r][c] = -1.0f; // -1.0 indicates no active animation
             }
         }
     }
@@ -26,6 +34,7 @@ public class Board {
     public void typeLetter(char letter) {
         if (currentCol < cols) {
             tiles[currentRow][currentCol].setLetter(letter);
+            bounceTimers[currentRow][currentCol] = 0.0f; // Start the jump animation
             currentCol++;
         }
     }
@@ -34,18 +43,21 @@ public class Board {
         if (currentCol > 0) {
             currentCol--;
             tiles[currentRow][currentCol].setLetter(' ');
+            bounceTimers[currentRow][currentCol] = -1.0f; // Stop animation if letter is deleted
         }
     }
 
     public TileState[] submitGuess() {
-        if (currentCol < cols) return null; // not full row yet
+        if (currentCol < cols) return null; // not a full row yet
 
         String guessWord = getSubmittedWord();
         TileState[] result = manager.submitGuess(guessWord);
         if (result == null) return null;
 
         for (int c = 0; c < cols; c++) {
+            // Apply the result and start the pop animation for each tile
             tiles[currentRow][c].setState(result[c]);
+            bounceTimers[currentRow][c] = 0.0f;
         }
 
         if (!manager.isGameOver()) {
@@ -101,11 +113,35 @@ public class Board {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 Tile tile = tiles[r][c];
-
                 float x = startX + c * (tileSize + gap);
                 float y = startY - r * (tileSize + gap);
 
-                tile.render(batch, shapeRenderer, font, x, y, tileSize);
+                // Update and render animation if it's active
+                if (bounceTimers[r][c] >= 0.0f) {
+                    bounceTimers[r][c] += Gdx.graphics.getDeltaTime();
+
+                    float duration = (r == currentRow) ? POP_DURATION : JUMP_DURATION;
+
+                    if (bounceTimers[r][c] < duration) {
+                        float progress = bounceTimers[r][c] / duration;
+                        float scale = 1.0f;
+                        if (r == currentRow) {
+                            // Pop animation on submit
+                            scale = 1.0f + Interpolation.pow2In.apply(progress) * 0.1f;
+                        } else {
+                            // Jump animation on typing
+                            scale = 1.0f + Interpolation.bounceOut.apply(progress) * 0.15f;
+                        }
+                        tile.render(batch, shapeRenderer, font, x, y, tileSize, scale);
+                    } else {
+                        // Animation is complete, reset timer and render normally
+                        bounceTimers[r][c] = -1.0f;
+                        tile.render(batch, shapeRenderer, font, x, y, tileSize);
+                    }
+                } else {
+                    // No animation, just render the tile normally
+                    tile.render(batch, shapeRenderer, font, x, y, tileSize);
+                }
             }
         }
     }

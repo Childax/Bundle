@@ -23,8 +23,19 @@ public class Tile {
     public TileState getState() { return state; }
     public void setState(TileState state) { this.state = state; }
 
+    /**
+     * Renders the tile with a default scale of 1.0.
+     */
     public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font,
                        float x, float y, float tileSize) {
+        render(batch, shapeRenderer, font, x, y, tileSize, 1.0f);
+    }
+
+    /**
+     * Renders the tile with a specified scale for animation.
+     */
+    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font,
+                       float x, float y, float tileSize, float scale) {
 
         // --- Pick color based on state ---
         Color color;
@@ -35,16 +46,21 @@ public class Tile {
             default:      color = Color.LIGHT_GRAY; // EMPTY
         }
 
+        // --- Calculate scaled dimensions and offsets to center the tile ---
+        float scaledSize = tileSize * scale;
+        float xOffset = (tileSize - scaledSize) / 2;
+        float yOffset = (tileSize - scaledSize) / 2;
+
         // --- Draw filled square ---
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(color);
-        shapeRenderer.rect(x, y, tileSize, tileSize);
+        shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
         shapeRenderer.end();
 
         // --- Draw border ---
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.BLACK);
-        shapeRenderer.rect(x, y, tileSize, tileSize);
+        shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
         shapeRenderer.end();
 
         // --- Draw letter (centered) ---
