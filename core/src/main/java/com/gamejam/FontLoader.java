@@ -9,7 +9,7 @@ public class FontLoader {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal(path));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = size;
-        parameter.characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        parameter.characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
         BitmapFont font = generator.generateFont(parameter);
         generator.dispose();
         return font;
