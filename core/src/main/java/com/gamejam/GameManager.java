@@ -61,13 +61,20 @@ public class GameManager {
         }
     }
 
-    public TileState[] submitGuess(String guess) {
+    /**
+     * Submits a guess for the current stage.
+     * @param guess The word guessed by the player.
+     * @param currentRow The current row number on the board (0-indexed).
+     * @return The array of TileStates for the guessed word.
+     */
+    public TileState[] submitGuess(String guess, int currentRow) {
+        // If the game is already over, we shouldn't allow any more guesses.
         if (gameOver) return null;
 
         String solution = stageWords.get(currentStage);
-
         guess = guess.toLowerCase();
 
+        // Check if the word is in the valid list.
         if (!validWords.contains(guess)) {
             System.out.println("Not in word list!");
             return null;
@@ -75,9 +82,14 @@ public class GameManager {
 
         TileState[] result = WordChecker.checkWord(guess, solution);
 
+        // Check for a win condition
         if (guess.equals(solution)) {
             System.out.println("Stage solved!");
             stageSolved = true;
+        } else if (currentRow == 5) {
+            // This is the loss condition: the last guess was incorrect
+            gameOver = true;
+            System.out.println("You lose!");
         }
 
         return result;
@@ -133,4 +145,3 @@ public class GameManager {
         return currentStage;
     }
 }
-

@@ -47,11 +47,16 @@ public class Board {
         }
     }
 
-    public TileState[] submitGuess() {
+    /**
+     * Submits the current guess to the game manager and updates the board.
+     * @param currentRow The current row number from the Main class.
+     * @return The array of TileStates for the guessed word, or null if the guess is invalid.
+     */
+    public TileState[] submitGuess(int currentRow) {
         if (currentCol < cols) return null; // not a full row yet
 
         String guessWord = getSubmittedWord();
-        TileState[] result = manager.submitGuess(guessWord);
+        TileState[] result = manager.submitGuess(guessWord, currentRow);
         if (result == null) return null;
 
         for (int c = 0; c < cols; c++) {
@@ -60,10 +65,7 @@ public class Board {
             bounceTimers[currentRow][c] = 0.0f;
         }
 
-        if (!manager.isGameOver()) {
-            currentRow++;
-            currentCol = 0;
-        }
+        // We no longer advance the row here. The Main class handles it.
         return result;
     }
 
@@ -77,6 +79,16 @@ public class Board {
             guess.append(tiles[currentRow][c].getLetter());
         }
         return guess.toString().trim();
+    }
+
+    /**
+     * Moves the board's internal state to the next row, and resets the column for the next guess.
+     */
+    public void advanceRow() {
+        if (currentRow < rows - 1) {
+            this.currentRow++;
+            this.currentCol = 0;
+        }
     }
 
     /**

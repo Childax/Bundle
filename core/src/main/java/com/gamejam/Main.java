@@ -37,7 +37,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     private enum GameState {
         MENU,
         PLAYING,
-        HOW_TO_PLAY
+        HOW_TO_PLAY,
+        GAME_OVER
     }
     private GameState gameState;
 
@@ -99,6 +100,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                 break;
             case HOW_TO_PLAY:
                 drawHowToPlayScreen();
+                break;
+            case GAME_OVER:
+                drawGameOverScreen();
                 break;
         }
     }
@@ -170,6 +174,26 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         batch.end();
     }
 
+    private void drawGameOverScreen() {
+        batch.begin();
+        font.setColor(Color.WHITE);
+        String message;
+        String solution = gameManager.getStageWords().get(gameManager.getCurrentStage());
+        if (gameManager.isStageSolved()) {
+            message = "You Win!";
+        } else {
+            message = "You Lose! The word was " + solution.toUpperCase();
+        }
+
+        layout.setText(font, message);
+        font.draw(batch, layout, Gdx.graphics.getWidth() / 2f - layout.width / 2, Gdx.graphics.getHeight() / 2f + 50);
+
+        layout.setText(font, "Press Enter to return to menu");
+        font.draw(batch, layout, Gdx.graphics.getWidth() / 2f - layout.width / 2, Gdx.graphics.getHeight() / 2f - 50);
+
+        batch.end();
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (gameState == GameState.PLAYING) {
@@ -178,40 +202,53 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                 board.typeLetter(letter);
             } else if (keycode == Input.Keys.ENTER) {
                 String submittedWord = board.getSubmittedWord();
-                TileState[] result = board.submitGuess();
+                int currentRow = board.getCurrentRow(); // Get current row before submitting
+                TileState[] result = board.submitGuess(currentRow); // Pass the row to the board
 
                 if (result != null) {
+                    // Update keyboard and advance the board's row
                     for (int c = 0; c < 5; c++) {
                         char letter = submittedWord.charAt(c);
                         keyboard.updateKeyState(letter, result[c]);
                     }
 
-                    if (gameManager.isStageSolved() && !gameManager.isGameOver()) {
+                    // Advance the row regardless of win/loss
+                    board.advanceRow();
+
+                    if (gameManager.isStageSolved()) {
                         solvedWords.add(submittedWord);
                         solvedWordStates.add(result);
 
-                        if (!gameManager.advanceStage()) return false;
+                        if (!gameManager.advanceStage()) {
+                            gameState = GameState.GAME_OVER;
+                        } else {
+                            board.reset();
+                            keyboard.reset();
 
-                        board.reset();
-                        keyboard.reset();
+                            int currentStage = gameManager.getCurrentStage();
+                            String currentAnswer = gameManager.getStageWords().get(currentStage);
 
-                        int currentStage = gameManager.getCurrentStage();
-                        String currentAnswer = gameManager.getStageWords().get(currentStage);
-
-                        for (int i = 0; i < solvedWords.size(); i++) {
-                            String word = solvedWords.get(i);
-                            TileState[] states = WordChecker.checkWord(word, currentAnswer.toUpperCase());
-                            board.loadSolvedWord(word, states);
-                            for (int c = 0; c < 5; c++) {
-                                keyboard.updateKeyState(word.charAt(c), states[c]);
+                            for (int i = 0; i < solvedWords.size(); i++) {
+                                String word = solvedWords.get(i);
+                                TileState[] states = WordChecker.checkWord(word, currentAnswer.toUpperCase());
+                                board.loadSolvedWord(word, states);
+                                for (int c = 0; c < 5; c++) {
+                                    keyboard.updateKeyState(word.charAt(c), states[c]);
+                                }
                             }
                         }
+                    } else if (gameManager.isGameOver()) {
+                        gameState = GameState.GAME_OVER;
                     }
                 }
             } else if (keycode == Input.Keys.BACKSPACE) {
                 isBackspaceHeld = true;
                 board.deleteLetter();
                 backspaceHoldTimer = 0.0f;
+            }
+        } else if (gameState == GameState.GAME_OVER) {
+            if (keycode == Input.Keys.ENTER) {
+                gameState = GameState.MENU;
             }
         }
         return true;
