@@ -95,6 +95,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                 }
 
                 board.render(batch, shapeRenderer, font);
+                keyboardFont.setColor(Color.BLACK); // Ensure keyboard font is black
                 keyboard.render(batch, shapeRenderer, keyboardFont, 1024);
 
                 // Draw stage number

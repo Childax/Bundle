@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,20 +75,25 @@ public class Keyboard {
                 if (isDel)   { keyLabel = "DEL"; thisWidth = keyWidth*2; }
 
                 // key background color
-                Color color;
+                Color keyBackgroundColor;
                 if (keyLabel.length() == 1) {
                     TileState state = keyStates.get(keyLabel.charAt(0));
-                    if (state == TileState.CORRECT) color = Color.GREEN;
-                    else if (state == TileState.PRESENT) color = Color.YELLOW;
-                    else if (state == TileState.ABSENT) color = Color.GRAY;
-                    else color = Color.DARK_GRAY;
-                } else {
-                    color = Color.DARK_GRAY; // ENTER/DEL
+                    if (state == TileState.CORRECT) {
+                        keyBackgroundColor = Color.GREEN;
+                    } else if (state == TileState.PRESENT) {
+                        keyBackgroundColor = Color.YELLOW;
+                    } else if (state == TileState.ABSENT) {
+                        keyBackgroundColor = Color.DARK_GRAY;
+                    } else { // TileState.EMPTY
+                        keyBackgroundColor = Color.LIGHT_GRAY;
+                    }
+                } else { // ENTER/DEL
+                    keyBackgroundColor = Color.LIGHT_GRAY;
                 }
 
                 // draw background
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(color);
+                shapeRenderer.setColor(keyBackgroundColor);
                 shapeRenderer.rect(xPos, yPos, thisWidth, keyHeight);
                 shapeRenderer.end();
 
@@ -106,6 +110,7 @@ public class Keyboard {
                 layout.setText(font, keyLabel);
                 float textX = xPos + (thisWidth - layout.width)/2f;
                 float textY = yPos + (keyHeight + layout.height)/2f;
+                font.setColor(Color.BLACK);
                 font.draw(batch, layout, textX, textY);
                 font.getData().setScale(1f);
                 batch.end();
@@ -125,4 +130,3 @@ public class Keyboard {
         }
     }
 }
-
