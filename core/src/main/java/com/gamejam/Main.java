@@ -25,6 +25,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     private List<String> solvedWords = new ArrayList<>();
     private List<TileState[]> solvedWordStates = new ArrayList<>();
 
+    // Backspace hold variables
+    private boolean isBackspaceHeld = false;
+    private float backspaceHoldTimer = 0.0f;
+    private final float INITIAL_BACKSPACE_DELAY = 0.5f; // Delay before the first repeat
+    private final float REPEAT_BACKSPACE_DELAY = 0.05f; // Delay for subsequent repeats
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -42,6 +48,25 @@ public class Main extends ApplicationAdapter implements InputProcessor {
     @Override
     public void render() {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+
+        // Check for backspace hold in the main render loop
+        if (isBackspaceHeld) {
+            backspaceHoldTimer += Gdx.graphics.getDeltaTime();
+
+            // Handle initial deletion after a brief delay
+            if (backspaceHoldTimer > INITIAL_BACKSPACE_DELAY) {
+                if (backspaceHoldTimer - Gdx.graphics.getDeltaTime() <= INITIAL_BACKSPACE_DELAY) {
+                    board.deleteLetter();
+                } else {
+                    // Handle rapid repeat deletions
+                    if (backspaceHoldTimer > INITIAL_BACKSPACE_DELAY + REPEAT_BACKSPACE_DELAY) {
+                        board.deleteLetter();
+                        backspaceHoldTimer = INITIAL_BACKSPACE_DELAY; // Reset timer to repeat
+                    }
+                }
+            }
+        }
+
         board.render(batch, shapeRenderer, font);
         keyboard.render(batch, shapeRenderer, keyboardFont, 1024);
     }
@@ -86,13 +111,24 @@ public class Main extends ApplicationAdapter implements InputProcessor {
                 }
             }
         } else if (keycode == Input.Keys.BACKSPACE) {
+            // This handles the initial press
+            isBackspaceHeld = true;
             board.deleteLetter();
+            backspaceHoldTimer = 0.0f;
         }
         return true;
     }
 
+    @Override
+    public boolean keyUp(int keycode) {
+        if (keycode == Input.Keys.BACKSPACE) {
+            isBackspaceHeld = false;
+            backspaceHoldTimer = 0.0f;
+        }
+        return false;
+    }
+
     // unused InputProcessor methods
-    @Override public boolean keyUp(int keycode) { return false; }
     @Override public boolean keyTyped(char character) { return false; }
     @Override public boolean touchDown(int x, int y, int pointer, int button) { return false; }
     @Override public boolean touchUp(int x, int y, int pointer, int button) { return false; }
