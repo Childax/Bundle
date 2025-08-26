@@ -2,6 +2,7 @@ package com.gamejam.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.graphics.Color;
 import com.gamejam.Main;
 
 /** Launches the desktop (LWJGL3) application. */
