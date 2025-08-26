@@ -1,6 +1,8 @@
 package com.gamejam;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -40,10 +42,10 @@ public class Tile {
         // --- Pick color based on state ---
         Color color;
         switch (state) {
-            case CORRECT: color = Color.GREEN; break;
-            case PRESENT: color = Color.GOLD; break;
-            case ABSENT:  color = Color.DARK_GRAY; break;
-            default:      color = Color.LIGHT_GRAY; // EMPTY
+            case CORRECT: color = WordleColors.CORRECT; break;
+            case PRESENT: color = WordleColors.PRESENT; break;
+            case ABSENT:  color = WordleColors.ABSENT; break;
+            default:      color = new Color(0.2f, 0.2f, 0.2f, 1f); // A slightly darker shade of background for EMPTY
         }
 
         // --- Calculate scaled dimensions and offsets to center the tile ---
@@ -51,17 +53,38 @@ public class Tile {
         float xOffset = (tileSize - scaledSize) / 2;
         float yOffset = (tileSize - scaledSize) / 2;
 
-        // --- Draw filled square ---
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(color);
-        shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
-        shapeRenderer.end();
+        // --- Draw filled square only if the tile state has been updated (submitted) ---
+        if (state != TileState.EMPTY) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(color);
+            shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
+            shapeRenderer.end();
+        }
 
-        // --- Draw border ---
+        // --- Draw the border with variable thickness ---
+        // Gdx.gl.glLineWidth() is a global GL state, so we must set it and then reset it.
+        // The default line width is 1.0.
+        float borderWidth = 1.0f;
+        Color borderColor;
+        if (letter != ' ' && state == TileState.EMPTY) {
+            // Thicker border for typed letters that haven't been submitted
+            borderColor = WordleColors.TYPED_OUTLINE;
+        } else if (letter == ' ' && state == TileState.EMPTY) {
+            // Thin border for initial empty tiles
+            borderColor = WordleColors.DEFAULT_OUTLINE;
+        } else {
+            // No outline for submitted tiles
+            borderWidth = 0;
+            borderColor = getColor(getState());
+        }
+
+        Gdx.gl.glLineWidth(borderWidth);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.BLACK);
+        shapeRenderer.setColor(borderColor);
         shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
         shapeRenderer.end();
+        // Reset the line width back to default to avoid affecting other renderings
+        Gdx.gl.glLineWidth(1.0f);
 
         // --- Draw letter (centered) ---
         if (letter != ' ') {
@@ -72,7 +95,7 @@ public class Tile {
             float textY = y + (tileSize + layout.height) / 2;
 
             batch.begin();
-            font.setColor(Color.BLACK);
+            font.setColor(Color.WHITE); // Use white for the letter color
             font.draw(batch, layout, textX, textY);
             batch.end();
         }
@@ -80,9 +103,9 @@ public class Tile {
 
     public static Color getColor(TileState state) {
         switch (state) {
-            case CORRECT: return Color.GREEN;
-            case PRESENT: return Color.GOLD;
-            case ABSENT:  return Color.DARK_GRAY;
+            case CORRECT: return WordleColors.CORRECT;
+            case PRESENT: return WordleColors.PRESENT;
+            case ABSENT:  return WordleColors.ABSENT;
             default:      return Color.LIGHT_GRAY;
         }
     }
