@@ -5,6 +5,9 @@ import com.badlogic.gdx.files.FileHandle;
 
 import java.util.*;
 
+/**
+ * Manages the core game logic, including word selection, state tracking, and validation.
+ */
 public class GameManager {
     private List<String> stageWords;
     private Set<String> validWords;
@@ -13,12 +16,23 @@ public class GameManager {
     private int currentStage;
     private boolean stageSolved;
     private boolean gameOver;
+    private boolean isFinalWin = false; // New property to track the final win state
 
     public GameManager(int numStages) {
         this.numStages = numStages;
-        this.currentStage = 0;
         loadWordLists();
         pickNewSolutions();
+    }
+
+    /**
+     * Resets the game manager's state for a new game.
+     * This is the crucial fix to prevent crashes by resetting all state variables.
+     */
+    public void reset() {
+        this.currentStage = 0;
+        this.stageSolved = false;
+        this.gameOver = false;
+        this.isFinalWin = false;
     }
 
     private void loadWordLists() {
@@ -41,7 +55,13 @@ public class GameManager {
         }
     }
 
+    /**
+     * Picks new words for the game and resets the game state.
+     */
     public void pickNewSolutions() {
+        // Call the reset method here to ensure a clean state before picking new words.
+        reset();
+
         this.stageWords = new ArrayList<>();
         Random r = new Random();
         for (int i = 0; i < numStages; i++) {
@@ -53,7 +73,6 @@ public class GameManager {
             }
             stageWords.add(word);
         }
-        gameOver = false;
         System.out.println("DEBUG: Words are: ");
         assert stageWords != null;
         for (String word : stageWords) {
@@ -100,7 +119,6 @@ public class GameManager {
         stageSolved = false;
         if (currentStage >= numStages) {
             gameOver = true;
-            System.out.println("You win!");
             return false;
         }
         return true;
@@ -143,5 +161,21 @@ public class GameManager {
 
     public int getCurrentStage() {
         return currentStage;
+    }
+
+    /**
+     * Checks if the player has won the entire game (all stages completed).
+     * @return true if the game is won, false otherwise.
+     */
+    public boolean isFinalWin() {
+        return isFinalWin;
+    }
+
+    /**
+     * Sets the final win state of the game.
+     * @param finalWin The final win state to set.
+     */
+    public void setFinalWin(boolean finalWin) {
+        isFinalWin = finalWin;
     }
 }
