@@ -37,8 +37,16 @@ public class GameScreen implements Screen {
     private BitmapFont keyboardFont;
 
     // Variables for the spritesheet and animation
-    private Texture rabbitTexture;
+    private Texture rabbitIdleTexture;
+    private Texture rabbitDeathTexture;
     private Animation<TextureRegion> idleAnimation;
+    private Animation<TextureRegion> deathAnimation;
+
+    // Variables for the carrot animation
+    private List<Texture> carrotIdleTextures = new ArrayList<>();
+    private List<Texture> carrotDeathTextures = new ArrayList<>();
+    private Animation<TextureRegion> carrotIdleAnimation;
+    private Animation<TextureRegion> carrotDeathAnimation;
     private float stateTime; // Timer to keep track of the animation's state
 
     // An enumeration of the different game states within this screen
@@ -61,12 +69,15 @@ public class GameScreen implements Screen {
     // For keeping track of solved words
     private List<String> solvedWords = new ArrayList<>();
     private List<TileState[]> solvedWordStates = new ArrayList<>();
+    private String solutionWord;
 
     private final GlyphLayout layout = new GlyphLayout();
 
     // Durations for the different animation states
     private static final float WIN_ANIMATION_DURATION = 1.5f; // Duration for the all-green board flash
-    private static final float STAGE_COMPLETE_DURATION = 2.0f; // Total duration for the win text display
+    private static final float STAGE_COMPLETE_DURATION = 5.0f; // Total duration for the win text display
+    private static final float GAME_OVER_DURATION = 5.0f; // Total duration for the game over text display
+
 
     public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard) {
         this.game = game;
@@ -80,23 +91,53 @@ public class GameScreen implements Screen {
         this.font = game.getFont();
         this.keyboardFont = game.getKeyboardFont();
 
-        // Load the spritesheet and create the animation
-        rabbitTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet idle.png"));
-
-        // Split the texture into individual frames
-        TextureRegion[][] tmp = TextureRegion.split(rabbitTexture,
-            rabbitTexture.getWidth() / 4,
-            rabbitTexture.getHeight() / 1);
-
-        // Put frames into a 1D array
+        // --- LOAD RABBIT IDLE ANIMATION ---
+        rabbitIdleTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet idle.png"));
+        TextureRegion[][] idleTmp = TextureRegion.split(rabbitIdleTexture,
+            rabbitIdleTexture.getWidth() / 4,
+            rabbitIdleTexture.getHeight() / 1);
         TextureRegion[] idleFrames = new TextureRegion[4];
         for (int i = 0; i < 4; i++) {
-            idleFrames[i] = tmp[0][i];
+            idleFrames[i] = idleTmp[0][i];
         }
-
-        // Create the animation object
         idleAnimation = new Animation<TextureRegion>(0.15f, idleFrames);
         stateTime = 0f;
+
+        // --- LOAD RABBIT DEATH ANIMATION ---
+        rabbitDeathTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet death.png"));
+        TextureRegion[][] deathTmp = TextureRegion.split(rabbitDeathTexture,
+            rabbitDeathTexture.getWidth() / 4,
+            rabbitDeathTexture.getHeight() / 1);
+        TextureRegion[] deathFrames = new TextureRegion[4];
+        for (int i = 0; i < 4; i++) {
+            deathFrames[i] = deathTmp[0][i];
+        }
+        deathAnimation = new Animation<TextureRegion>(0.15f, deathFrames);
+
+
+        // --- LOAD CARROT IDLE ANIMATION ---
+        TextureRegion[] carrotIdleFrames = new TextureRegion[5];
+        for (int i = 0; i < 5; i++) {
+            String carrotIdlePath = "carrot/Idle/Idle" + (i+1) + ".png";
+            Texture frameTexture = new Texture(Gdx.files.internal(carrotIdlePath));
+            carrotIdleTextures.add(frameTexture);
+            TextureRegion carrotRegion  = new TextureRegion(frameTexture);
+            carrotRegion.flip(true, false);
+            carrotIdleFrames[i] = carrotRegion;
+        }
+        carrotIdleAnimation = new Animation<TextureRegion>(0.15f, carrotIdleFrames);
+
+        // --- LOAD CARROT DEATH ANIMATION ---
+        TextureRegion[] carrotDeathFrames = new TextureRegion[8];
+        for (int i = 0; i < 8; i++) {
+            String carrotDeathPath = "carrot/Death/Death" + (i+1) + ".png";
+            Texture frameTexture = new Texture(Gdx.files.internal(carrotDeathPath));
+            carrotDeathTextures.add(frameTexture);
+            TextureRegion carrotRegion = new TextureRegion(frameTexture);
+            carrotRegion.flip(true, false);
+            carrotDeathFrames[i] = carrotRegion;
+        }
+        carrotDeathAnimation = new Animation<TextureRegion>(0.15f, carrotDeathFrames);
     }
 
     @Override
@@ -145,7 +186,10 @@ public class GameScreen implements Screen {
                 }
                 break;
             case GAME_OVER:
-                drawGameOverScreen();
+                renderGameOverScene();
+                if (stateTimer >= GAME_OVER_DURATION) {
+                    game.setScreen(game.menuScreen);
+                }
                 break;
         }
     }
@@ -176,7 +220,12 @@ public class GameScreen implements Screen {
         float tileGap = 10f;
         float totalWidth = (5 * tileSize) + (4 * tileGap);
         float startX = (Gdx.graphics.getWidth() - totalWidth) / 2f;
-        float startY = (Gdx.graphics.getHeight() / 2f) + 100;
+
+        // Use a consistent center point for positioning
+        float centerY = Gdx.graphics.getHeight() / 2f - 100;
+
+        // Position the tiles below the center
+        float tilesY = centerY - 100;
 
         // --- FIRST PASS: Draw Shapes ---
         Gdx.gl.glEnable(GL20.GL_BLEND); // Enable blending for transparency
@@ -193,7 +242,7 @@ public class GameScreen implements Screen {
                 Tile tile = new Tile();
                 tile.setLetter(word.charAt(i));
                 tile.setState(states[i]);
-                tile.renderShape(shapeRenderer, startX + (i * (tileSize + tileGap)), startY, tileSize, 1.0f, alpha);
+                tile.renderShape(shapeRenderer, startX + (i * (tileSize + tileGap)), tilesY, tileSize, 1.0f, alpha);
             }
         }
         shapeRenderer.end();
@@ -204,7 +253,13 @@ public class GameScreen implements Screen {
         font.setColor(1.0f, 1.0f, 1.0f, alpha);
         String message = "Stage Complete!";
         layout.setText(font, message);
-        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, Gdx.graphics.getHeight() - 50);
+        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, Gdx.graphics.getHeight() - 150);
+
+        // Add the "The word was:" text
+        String wordMessage = "The word was:";
+        layout.setText(font, wordMessage);
+        // Position the text slightly above the tiles
+        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, tilesY + tileSize + 60);
 
         if (!solvedWords.isEmpty()) {
             int lastRow = solvedWords.size() - 1;
@@ -215,30 +270,124 @@ public class GameScreen implements Screen {
                 Tile tile = new Tile();
                 tile.setLetter(word.charAt(i));
                 tile.setState(states[i]);
-                tile.renderText(batch, font, startX + (i * (tileSize + tileGap)), startY, tileSize, alpha);
+                tile.renderText(batch, font, startX + (i * (tileSize + tileGap)), tilesY, tileSize, alpha);
             }
         }
 
-        // Get the current frame from the animation
-        TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime, true);
-
-        // Define a scaling factor to make the bunny bigger
-        float scaleFactor = 10.0f;
-        float scaledWidth = currentFrame.getRegionWidth() * scaleFactor;
-        float scaledHeight = currentFrame.getRegionHeight() * scaleFactor;
-
-        // Draw the current frame with the new scaled dimensions
+        // --- DRAW THE BUNNY IDLE ANIMATION ---
+        TextureRegion currentBunnyFrame = idleAnimation.getKeyFrame(stateTime, true);
+        float scaleFactor = 5.0f;
+        float scaledBunnyWidth = currentBunnyFrame.getRegionWidth() * scaleFactor;
+        float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
         float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
-        float bunnyX = (screenWidth - scaledWidth) / 2f;
-        float bunnyY = (screenHeight - scaledHeight) / 2f - 100; // Position below the middle
-
+        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f + 30;
+        float bunnyY = centerY + 20;
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
-        batch.draw(currentFrame, bunnyX, bunnyY, scaledWidth, scaledHeight);
+        batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
+        batch.setColor(Color.WHITE); // Reset color to default
+
+        // --- DRAW THE CARROT IDLE ANIMATION ---
+        TextureRegion currentCarrotFrame = carrotIdleAnimation.getKeyFrame(stateTime, true);
+        float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * (scaleFactor - 2);
+        float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * (scaleFactor - 2);
+        // Position the carrot to the left of the bunny
+        float carrotX = bunnyX - 20;
+        float carrotY = bunnyY + 20;
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
+        batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
         batch.setColor(Color.WHITE); // Reset color to default
 
         batch.end();
     }
+
+    /**
+     * Renders a custom scene for a game over state with a fade-in effect.
+     */
+    private void renderGameOverScene() {
+        // Clear the screen to a solid color
+        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+
+        // Calculate the current alpha for the fade-in effect
+        float alpha = Math.min(1.0f, stateTimer / 1.0f); // Fades in over 1 second
+
+        // Set up the scene elements' positions
+        float tileSize = 64f;
+        float tileGap = 10f;
+        float totalWidth = (5 * tileSize) + (4 * tileGap);
+        float startX = (Gdx.graphics.getWidth() - totalWidth) / 2f;
+
+        // Use a consistent center point for positioning
+        float centerY = Gdx.graphics.getHeight() / 2f - 100;
+
+        // Position the tiles below the center
+        float tilesY = centerY - 100;
+
+        // --- FIRST PASS: Draw Shapes (FOR TILES AND BACKGROUND) ---
+        Gdx.gl.glEnable(GL20.GL_BLEND); // Enable blending for transparency
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.1f, 0.1f, 0.15f, alpha);
+        shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // RENDER THE TILE SHAPES FOR THE SOLUTION WORD
+        String solution = gameManager.getStageWords().get(gameManager.getCurrentStage()).toUpperCase();
+        TileState[] states = WordChecker.checkWord(solution, solution);
+        for (int i = 0; i < 5; i++) {
+            Tile tile = new Tile();
+            tile.setLetter(solution.charAt(i));
+            tile.setState(states[i]);
+            tile.renderShape(shapeRenderer, startX + (i * (tileSize + tileGap)), tilesY, tileSize, 1.0f, alpha);
+        }
+
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND); // Disable blending after we're done with transparent shapes
+
+        // --- SECOND PASS: Draw Sprites and Text ---
+        batch.begin();
+        font.setColor(1.0f, 1.0f, 1.0f, alpha);
+        String message = "GAME OVER!";
+        layout.setText(font, message);
+        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, Gdx.graphics.getHeight() - 150);
+
+        // Add the "The word was:" text
+        String wordMessage = "The word was:";
+        layout.setText(font, wordMessage);
+        // Position the text slightly above the tiles
+        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, tilesY + tileSize + 60);
+
+        // RENDER THE TILE LETTERS FOR THE SOLUTION WORD
+        for (int i = 0; i < 5; i++) {
+            Tile tile = new Tile();
+            tile.setLetter(solution.charAt(i));
+            tile.setState(states[i]);
+            tile.renderText(batch, font, startX + (i * (tileSize + tileGap)), tilesY, tileSize, alpha);
+        }
+
+        // --- DRAW THE BUNNY DEATH ANIMATION ---
+        TextureRegion currentBunnyFrame = deathAnimation.getKeyFrame(stateTime, false); // No looping for death animation
+        float scaleFactor = 5.0f;
+        float scaledBunnyWidth = currentBunnyFrame.getRegionWidth() * scaleFactor;
+        float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
+        float screenWidth = Gdx.graphics.getWidth();
+        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f + 30;
+        float bunnyY = centerY + 20;
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
+        batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
+        batch.setColor(Color.WHITE); // Reset color to default
+
+        // --- DRAW THE CARROT DEATH ANIMATION ---
+        TextureRegion currentCarrotFrame = carrotDeathAnimation.getKeyFrame(stateTime, false); // No looping for death animation
+        float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * (scaleFactor - 2);
+        float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * (scaleFactor - 2);
+        // Position the carrot to the left of the bunny
+        float carrotX = bunnyX - 20;
+        float carrotY = bunnyY + 20;
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
+        batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
+        batch.setColor(Color.WHITE); // Reset color to default
+
+        batch.end();
+    }
+
 
     private void drawStageNumber() {
         // These begin/end calls are correct here because it's a single, self-contained draw action
@@ -254,27 +403,6 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-
-    private void drawGameOverScreen() {
-        batch.begin();
-        font.setColor(Color.WHITE);
-        String message;
-        if (gameManager.isFinalWin()) {
-            message = "YOU WIN! ALL STAGES COMPLETE!";
-        } else {
-            String solution = gameManager.getStageWords().get(gameManager.getCurrentStage());
-            message = "YOU LOSE! The word was " + solution.toUpperCase();
-        }
-
-        layout.setText(font, message);
-        font.draw(batch, layout, Gdx.graphics.getWidth() / 2f - layout.width / 2, Gdx.graphics.getHeight() / 2f + 50);
-
-        layout.setText(font, "Press Enter to return to menu");
-        font.draw(batch, layout, Gdx.graphics.getWidth() / 2f - layout.width / 2, Gdx.graphics.getHeight() / 2f - 50);
-
-        batch.end();
-    }
-
     public void reset() {
         solvedWords.clear();
         solvedWordStates.clear();
@@ -282,6 +410,8 @@ public class GameScreen implements Screen {
         stateTimer = 0.0f;
         board.reset();
         keyboard.reset();
+        // Reset stateTime when the game is reset
+        stateTime = 0f;
     }
 
     private void loadNextStage() {
@@ -325,7 +455,15 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
-        rabbitTexture.dispose();
+        rabbitIdleTexture.dispose();
+        rabbitDeathTexture.dispose();
+        // Dispose of each carrot texture in the list
+        for (Texture texture : carrotIdleTextures) {
+            texture.dispose();
+        }
+        for (Texture texture : carrotDeathTextures) {
+            texture.dispose();
+        }
     }
 
     private class GameInputProcessor implements InputProcessor {
@@ -353,6 +491,9 @@ public class GameScreen implements Screen {
                             stateTimer = 0;
                         } else if (gameManager.isGameOver()) {
                             currentState = GameState.GAME_OVER;
+                            stateTimer = 0;
+                            // Reset the animation timer specifically for the death animation
+                            stateTime = 0;
                         } else {
                             board.advanceRow();
                         }
@@ -361,10 +502,6 @@ public class GameScreen implements Screen {
                     isBackspaceHeld = true;
                     board.deleteLetter();
                     backspaceHoldTimer = 0.0f;
-                }
-            } else if (currentState == GameState.GAME_OVER) {
-                if (keycode == Input.Keys.ENTER) {
-                    game.setScreen(game.menuScreen);
                 }
             }
             return true;
