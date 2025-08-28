@@ -1,0 +1,34 @@
+
+Created by: Givty
+Website: https://givty.itch.io
+
+==============================
+
+License Summary
+
+You may:
+
+> Use the assets in commercial and non-commercial projects
+> Modify the assets (e.g. recolor, crop, animate, expand)
+> Include the modified or original assets in your games, videos, or other creative projects
+
+You may not:
+
+> Resell or redistribute the assets, even if you edit them
+> Upload the assets (original or modified) to other asset platforms or marketplaces
+
+----------
+
+Attribution
+
+Attribution is appreciated but not required.
+If you'd like to credit me, please use the name: Givty
+(e.g. Art by Givty)
+
+----------
+
+Disclaimer
+
+This license doesn’t grant trademark rights or imply endorsement.
+All rights not explicitly granted are reserved by the creator.
+Anyone who downloaded the assets under this license may continue to use them under these terms.
