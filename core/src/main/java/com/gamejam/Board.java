@@ -49,7 +49,7 @@ public class Board {
 
     /**
      * Submits the current guess to the game manager and updates the board.
-     * @param currentRow The current row number from the Main class.
+     * @param currentRow The current row number.
      * @return The array of TileStates for the guessed word, or null if the guess is invalid.
      */
     public TileState[] submitGuess(int currentRow) {
@@ -65,7 +65,6 @@ public class Board {
             bounceTimers[currentRow][c] = 0.0f;
         }
 
-        // We no longer advance the row here. The Main class handles it.
         return result;
     }
 
@@ -110,7 +109,16 @@ public class Board {
         return tiles[row][col];
     }
 
-    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font) {
+    /**
+     * Renders the entire game board. This method now performs two distinct passes
+     * (shapes then text) and assumes the renderers are already in their respective begin() calls.
+     *
+     * @param batch The SpriteBatch for drawing text.
+     * @param shapeRenderer The ShapeRenderer for drawing tile backgrounds and borders.
+     * @param font The font to use for the letters.
+     * @param alpha The alpha value for fade-in effects.
+     */
+    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, float alpha) {
         float tileSize = 64f;   // pixels per square
         float gap = 10f;
 
@@ -122,6 +130,8 @@ public class Board {
         int bottomMargin = 50;
         float startY = (Gdx.graphics.getHeight() + boardHeight) / 2f + bottomMargin;
 
+        // --- FIRST PASS: Render all tile shapes and borders ---
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 Tile tile = tiles[r][c];
@@ -129,33 +139,40 @@ public class Board {
                 float y = startY - r * (tileSize + gap);
 
                 // Update and render animation if it's active
+                float scale = 1.0f;
                 if (bounceTimers[r][c] >= 0.0f) {
                     bounceTimers[r][c] += Gdx.graphics.getDeltaTime();
-
                     float duration = (r == currentRow) ? POP_DURATION : JUMP_DURATION;
-
                     if (bounceTimers[r][c] < duration) {
                         float progress = bounceTimers[r][c] / duration;
-                        float scale = 1.0f;
                         if (r == currentRow) {
-                            // Pop animation on submit
                             scale = 1.0f + Interpolation.pow2In.apply(progress) * 0.1f;
                         } else {
-                            // Jump animation on typing
                             scale = 1.0f + Interpolation.bounceOut.apply(progress) * 0.15f;
                         }
-                        tile.render(batch, shapeRenderer, font, x, y, tileSize, scale);
                     } else {
-                        // Animation is complete, reset timer and render normally
+                        // Animation is complete, reset timer
                         bounceTimers[r][c] = -1.0f;
-                        tile.render(batch, shapeRenderer, font, x, y, tileSize);
                     }
-                } else {
-                    // No animation, just render the tile normally
-                    tile.render(batch, shapeRenderer, font, x, y, tileSize);
                 }
+                // Call the render method that handles shapes
+                tile.renderShape(shapeRenderer, x, y, tileSize, scale, alpha);
             }
         }
+        shapeRenderer.end();
+
+        // --- SECOND PASS: Render all tile letters ---
+        batch.begin();
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                Tile tile = tiles[r][c];
+                float x = startX + c * (tileSize + gap);
+                float y = startY - r * (tileSize + gap);
+                // Call the render method that handles text
+                tile.renderText(batch, font, x, y, tileSize, alpha);
+            }
+        }
+        batch.end();
     }
 
     public int getCurrentRow() {
@@ -167,10 +184,10 @@ public class Board {
             for (int c = 0; c < cols; c++) {
                 tiles[r][c].setLetter(' ');
                 tiles[r][c].setState(TileState.EMPTY);
+                bounceTimers[r][c] = -1.0f;
             }
         }
         this.currentRow = 0;
         this.currentCol = 0;
     }
-
 }

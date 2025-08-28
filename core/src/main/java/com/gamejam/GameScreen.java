@@ -5,9 +5,13 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 import java.util.ArrayList;
@@ -16,7 +20,7 @@ import java.util.List;
 /**
  * Manages the game states and screen transitions.
  * This class handles the logic for a single game screen, including displaying "all green"
- * and moving to the next stage.
+ * and moving to the next stage. It also implements a fade-in effect for the stage complete screen.
  */
 public class GameScreen implements Screen {
 
@@ -30,6 +34,11 @@ public class GameScreen implements Screen {
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
     private BitmapFont keyboardFont;
+
+    // Variables for the sprites
+    private Texture rabbitTexture;
+    private Sprite rabbitSprite;
+    private Sprite carrotSprite; // New sprite for the carrot
 
     // An enumeration of the different game states within this screen
     public enum GameState {
@@ -69,12 +78,16 @@ public class GameScreen implements Screen {
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
         this.keyboardFont = game.getKeyboardFont();
+
+        // Load the spritesheet and create the sprites
+        rabbitTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet idle.png"));
+        // Assuming the rabbit is at (0, 0) and the carrot is at (64, 0) in the spritesheet
+        rabbitSprite = new Sprite(new TextureRegion(rabbitTexture, 0, 0, 32, 32));
+        carrotSprite = new Sprite(new TextureRegion(rabbitTexture, 64, 0, 32, 32));
     }
 
     @Override
     public void show() {
-        // This is the crucial fix! Always set the InputProcessor when the screen becomes active.
-        // This ensures the game screen can receive keyboard and touch input after returning from the menu.
         Gdx.input.setInputProcessor(new GameInputProcessor());
     }
 
@@ -82,10 +95,9 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        // Update the state timer
         stateTimer += delta;
 
-        // Check for backspace hold in the main render loop
+        // Process backspace hold
         if (isBackspaceHeld) {
             backspaceHoldTimer += Gdx.graphics.getDeltaTime();
             if (backspaceHoldTimer > INITIAL_BACKSPACE_DELAY) {
@@ -100,31 +112,24 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Use a switch statement to handle logic for each state
         switch (currentState) {
             case PLAYING:
                 renderPlayingState();
                 break;
-
             case WIN_ANIMATION:
-                // Display the board with the final guess all green
                 renderPlayingState();
-                // Check if the animation duration has passed
                 if (stateTimer >= WIN_ANIMATION_DURATION) {
                     stateTimer = 0;
                     currentState = GameState.STAGE_COMPLETE;
                 }
                 break;
-
             case STAGE_COMPLETE:
-                renderStageCompleteText();
-                // Now, check for the transition to the next stage
+                renderStageCompleteScene();
                 if (stateTimer >= STAGE_COMPLETE_DURATION) {
                     stateTimer = 0;
                     loadNextStage();
                 }
                 break;
-
             case GAME_OVER:
                 drawGameOverScreen();
                 break;
@@ -135,47 +140,100 @@ public class GameScreen implements Screen {
      * Renders the game in the playing state.
      */
     private void renderPlayingState() {
-        board.render(batch, shapeRenderer, font);
+        // Correctly call the board's two-pass render method.
+        // We handle the begin/end calls at the GameScreen level.
+        board.render(batch, shapeRenderer, font, 1.0f); // Pass alpha of 1.0 since it's a non-fading state
         keyboard.render(batch, shapeRenderer, keyboardFont, 1024);
         drawStageNumber();
     }
 
     /**
-     * Renders the "ALL GREEN" text with a given alpha value.
+     * Renders a custom scene for a completed stage with a fade-in effect.
      */
-    private void renderStageCompleteText() {
-        ScreenUtils.clear(Color.GREEN); // Set a green background for the "ALL GREEN" text
+    private void renderStageCompleteScene() {
+        // Clear the screen to a solid color
+        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        String text = "ALL GREEN";
-        layout.setText(font, text); // Set the text for the layout
-        float textX = (Gdx.graphics.getWidth() - layout.width) / 2;
-        float textY = Gdx.graphics.getHeight() / 2;
+        // Calculate the current alpha for the fade-in effect
+        float alpha = Math.min(1.0f, stateTimer / 1.0f); // Fades in over 1 second
 
+        // Set up the scene elements' positions
+        float tileSize = 64f;
+        float tileGap = 10f;
+        float totalWidth = (5 * tileSize) + (4 * tileGap);
+        float startX = (Gdx.graphics.getWidth() - totalWidth) / 2f;
+        float startY = (Gdx.graphics.getHeight() / 2f) + 100;
+
+        // --- FIRST PASS: Draw Shapes ---
+        Gdx.gl.glEnable(GL20.GL_BLEND); // Enable blending for transparency
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.1f, 0.1f, 0.15f, alpha);
+        shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        if (!solvedWords.isEmpty()) {
+            int lastRow = solvedWords.size() - 1;
+            String word = solvedWords.get(lastRow);
+            TileState[] states = solvedWordStates.get(lastRow);
+            for (int i = 0; i < 5; i++) {
+                // Correctly render the tile shapes for the solved word
+                Tile tile = new Tile();
+                tile.setLetter(word.charAt(i));
+                tile.setState(states[i]);
+                tile.renderShape(shapeRenderer, startX + (i * (tileSize + tileGap)), startY, tileSize, 1.0f, alpha);
+            }
+        }
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND); // Disable blending after we're done with transparent shapes
+
+        // --- SECOND PASS: Draw Sprites and Text ---
         batch.begin();
-        font.setColor(Color.WHITE); // Keep font color solid
-        font.draw(batch, layout, textX, textY);
+        font.setColor(1.0f, 1.0f, 1.0f, alpha);
+        String message = "Stage Complete!";
+        layout.setText(font, message);
+        font.draw(batch, layout, (Gdx.graphics.getWidth() - layout.width) / 2f, Gdx.graphics.getHeight() - 50);
+
+        if (!solvedWords.isEmpty()) {
+            int lastRow = solvedWords.size() - 1;
+            String word = solvedWords.get(lastRow);
+            TileState[] states = solvedWordStates.get(lastRow);
+            for (int i = 0; i < 5; i++) {
+                // Correctly render the tile letters for the solved word
+                Tile tile = new Tile();
+                tile.setLetter(word.charAt(i));
+                tile.setState(states[i]);
+                tile.renderText(batch, font, startX + (i * (tileSize + tileGap)), startY, tileSize, alpha);
+            }
+        }
+
+        // Draw the rabbit and carrot sprites with the fade-in alpha
+        float centerX = Gdx.graphics.getWidth() / 2f;
+        float spriteY = (Gdx.graphics.getHeight() / 2f) - 100;
+
+        rabbitSprite.setPosition(centerX - 50, spriteY);
+        rabbitSprite.setColor(1.0f, 1.0f, 1.0f, alpha);
+        rabbitSprite.draw(batch);
+
+        carrotSprite.setPosition(centerX + 10, spriteY);
+        carrotSprite.setColor(1.0f, 1.0f, 1.0f, alpha);
+        carrotSprite.draw(batch);
+
         batch.end();
     }
 
     private void drawStageNumber() {
-        // Calculate the top of the board to position the stage number relative to it
-        float tileSize = 64f;
-        float gap = 10f;
-        int rows = 6;
-        float boardHeight = rows * tileSize + (rows - 1) * gap;
-        float startY = (Gdx.graphics.getHeight() + boardHeight) / 2f + 50;
-
+        // These begin/end calls are correct here because it's a single, self-contained draw action
         batch.begin();
-        keyboardFont.setColor(Color.WHITE); // Use the smaller font
+        keyboardFont.setColor(Color.WHITE);
         keyboardFont.getData().setScale(0.9f);
         String stageText = "Stage " + (gameManager.getCurrentStage() + 1);
         layout.setText(keyboardFont, stageText);
         float textX = (Gdx.graphics.getWidth() - layout.width) / 2f;
-        float textY = startY + 105;
+        float textY = Gdx.graphics.getHeight() - 15;
         keyboardFont.draw(batch, stageText, textX, textY);
         keyboardFont.getData().setScale(1f);
         batch.end();
     }
+
 
     private void drawGameOverScreen() {
         batch.begin();
@@ -197,9 +255,6 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-    /**
-     * Resets the game screen for a new game.
-     */
     public void reset() {
         solvedWords.clear();
         solvedWordStates.clear();
@@ -209,19 +264,14 @@ public class GameScreen implements Screen {
         keyboard.reset();
     }
 
-    /**
-     * Loads the next stage.
-     */
     private void loadNextStage() {
         if (!gameManager.advanceStage()) {
-            // All stages complete
             gameManager.setFinalWin(true);
             currentState = GameState.GAME_OVER;
         } else {
             board.reset();
             keyboard.reset();
 
-            // Re-apply solved words for the new stage
             int currentStage = gameManager.getCurrentStage();
             String currentAnswer = gameManager.getStageWords().get(currentStage);
 
@@ -255,6 +305,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        rabbitTexture.dispose();
     }
 
     private class GameInputProcessor implements InputProcessor {
@@ -266,8 +317,8 @@ public class GameScreen implements Screen {
                     board.typeLetter(letter);
                 } else if (keycode == Input.Keys.ENTER) {
                     String submittedWord = board.getSubmittedWord();
-                    int currentRow = board.getCurrentRow(); // Get current row before submitting
-                    TileState[] result = board.submitGuess(currentRow); // Pass the row to the board
+                    int currentRow = board.getCurrentRow();
+                    TileState[] result = board.submitGuess(currentRow);
 
                     if (result != null) {
                         for (int c = 0; c < 5; c++) {
@@ -276,7 +327,6 @@ public class GameScreen implements Screen {
                         }
 
                         if (gameManager.isStageSolved()) {
-                            // Stage solved, enter the win animation state.
                             solvedWords.add(submittedWord);
                             solvedWordStates.add(result);
                             currentState = GameState.WIN_ANIMATION;

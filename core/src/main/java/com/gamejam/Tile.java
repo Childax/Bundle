@@ -2,17 +2,15 @@ package com.gamejam;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 public class Tile {
     private char letter;
     private TileState state;
 
-    // Reuse one GlyphLayout to avoid GC churn
     private static final GlyphLayout layout = new GlyphLayout();
 
     public Tile() {
@@ -20,34 +18,31 @@ public class Tile {
         this.state = TileState.EMPTY;
     }
 
-    public void setLetter(char letter) { this.letter = letter; }
-    public char getLetter() { return letter; }
-    public TileState getState() { return state; }
-    public void setState(TileState state) { this.state = state; }
-
-    /**
-     * Renders the tile with a default scale of 1.0.
-     */
-    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font,
-                       float x, float y, float tileSize) {
-        render(batch, shapeRenderer, font, x, y, tileSize, 1.0f);
+    public void setLetter(char letter) {
+        this.letter = letter;
+    }
+    public char getLetter() {
+        return letter;
+    }
+    public TileState getState() {
+        return state;
+    }
+    public void setState(TileState state) {
+        this.state = state;
     }
 
     /**
-     * Renders the tile with a specified scale for animation.
+     * Renders the tile's background shape and border.
+     * This method assumes the ShapeRenderer has already been set up with begin().
+     *
+     * @param shapeRenderer The ShapeRenderer for drawing shapes.
+     * @param x             The x-coordinate of the tile.
+     * @param y             The y-coordinate of the tile.
+     * @param tileSize      The size of the tile.
+     * @param scale         The scale for animation.
+     * @param alpha         The alpha value for fade-in effects.
      */
-    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font,
-                       float x, float y, float tileSize, float scale) {
-
-        // --- Pick color based on state ---
-        Color color;
-        switch (state) {
-            case CORRECT: color = WordleColors.CORRECT; break;
-            case PRESENT: color = WordleColors.PRESENT; break;
-            case ABSENT:  color = WordleColors.ABSENT; break;
-            default:      color = new Color(0.2f, 0.2f, 0.2f, 1f); // A slightly darker shade of background for EMPTY
-        }
-
+    public void renderShape(ShapeRenderer shapeRenderer, float x, float y, float tileSize, float scale, float alpha) {
         // --- Calculate scaled dimensions and offsets to center the tile ---
         float scaledSize = tileSize * scale;
         float xOffset = (tileSize - scaledSize) / 2;
@@ -55,38 +50,63 @@ public class Tile {
 
         // --- Draw filled square only if the tile state has been updated (submitted) ---
         if (state != TileState.EMPTY) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(color);
+            Color color;
+            switch (state) {
+                case CORRECT:
+                    color = WordleColors.CORRECT;
+                    break;
+                case PRESENT:
+                    color = WordleColors.PRESENT;
+                    break;
+                case ABSENT:
+                    color = WordleColors.ABSENT;
+                    break;
+                default:
+                    // This case should not be reached with the current game logic,
+                    // but we'll fall back to a transparent color just in case.
+                    color = new Color(0, 0, 0, 0);
+            }
+            shapeRenderer.setColor(color.r, color.g, color.b, alpha);
             shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
-            shapeRenderer.end();
         }
 
-        // --- Draw the border with variable thickness ---
-        // Gdx.gl.glLineWidth() is a global GL state, so we must set it and then reset it.
-        // The default line width is 1.0.
-        float borderWidth = 1.0f;
+        // --- Draw the border with variable thickness and color ---
         Color borderColor;
-        if (letter != ' ' && state == TileState.EMPTY) {
-            // Thicker border for typed letters that haven't been submitted
-            borderColor = WordleColors.TYPED_OUTLINE;
-        } else if (letter == ' ' && state == TileState.EMPTY) {
-            // Thin border for initial empty tiles
-            borderColor = WordleColors.DEFAULT_OUTLINE;
-        } else {
-            // No outline for submitted tiles
-            borderWidth = 0;
-            borderColor = getColor(getState());
+        float borderThickness;
+
+        if (state == TileState.EMPTY) {
+            if (letter != ' ') {
+                // Letter has been typed, but not submitted
+                borderColor = WordleColors.TYPED_OUTLINE;
+                borderThickness = 3f;
+            } else {
+                // No letter, empty tile
+                borderColor = WordleColors.DEFAULT_OUTLINE;
+                borderThickness = 2f;
+            }
+
+            // Draw the outline using four separate rectangles
+            shapeRenderer.setColor(borderColor.r, borderColor.g, borderColor.b, alpha);
+            shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, borderThickness); // Bottom
+            shapeRenderer.rect(x + xOffset, y + yOffset + scaledSize - borderThickness, scaledSize, borderThickness); // Top
+            shapeRenderer.rect(x + xOffset, y + yOffset + borderThickness, borderThickness, scaledSize - 2 * borderThickness); // Left
+            shapeRenderer.rect(x + xOffset + scaledSize - borderThickness, y + yOffset + borderThickness, borderThickness, scaledSize - 2 * borderThickness); // Right
+
         }
+    }
 
-        Gdx.gl.glLineWidth(borderWidth);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(borderColor);
-        shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
-        shapeRenderer.end();
-        // Reset the line width back to default to avoid affecting other renderings
-        Gdx.gl.glLineWidth(1.0f);
-
-        // --- Draw letter (centered) ---
+    /**
+     * Renders the tile's letter.
+     * This method assumes the SpriteBatch has already been set up with begin().
+     *
+     * @param batch         The SpriteBatch for drawing text.
+     * @param font          The font to use for the letter.
+     * @param x             The x-coordinate of the tile.
+     * @param y             The y-coordinate of the tile.
+     * @param tileSize      The size of the tile.
+     * @param alpha         The alpha value for fade-in effects.
+     */
+    public void renderText(SpriteBatch batch, BitmapFont font, float x, float y, float tileSize, float alpha) {
         if (letter != ' ') {
             String text = String.valueOf(letter);
             layout.setText(font, text);
@@ -94,19 +114,8 @@ public class Tile {
             float textX = x + (tileSize - layout.width) / 2;
             float textY = y + (tileSize + layout.height) / 2;
 
-            batch.begin();
-            font.setColor(Color.WHITE); // Use white for the letter color
+            font.setColor(1.0f, 1.0f, 1.0f, alpha);
             font.draw(batch, layout, textX, textY);
-            batch.end();
-        }
-    }
-
-    public static Color getColor(TileState state) {
-        switch (state) {
-            case CORRECT: return WordleColors.CORRECT;
-            case PRESENT: return WordleColors.PRESENT;
-            case ABSENT:  return WordleColors.ABSENT;
-            default:      return Color.LIGHT_GRAY;
         }
     }
 }
