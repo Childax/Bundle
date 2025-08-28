@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -35,10 +36,10 @@ public class GameScreen implements Screen {
     private BitmapFont font;
     private BitmapFont keyboardFont;
 
-    // Variables for the sprites
+    // Variables for the spritesheet and animation
     private Texture rabbitTexture;
-    private Sprite rabbitSprite;
-    private Sprite carrotSprite; // New sprite for the carrot
+    private Animation<TextureRegion> idleAnimation;
+    private float stateTime; // Timer to keep track of the animation's state
 
     // An enumeration of the different game states within this screen
     public enum GameState {
@@ -79,11 +80,23 @@ public class GameScreen implements Screen {
         this.font = game.getFont();
         this.keyboardFont = game.getKeyboardFont();
 
-        // Load the spritesheet and create the sprites
+        // Load the spritesheet and create the animation
         rabbitTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet idle.png"));
-        // Assuming the rabbit is at (0, 0) and the carrot is at (64, 0) in the spritesheet
-        rabbitSprite = new Sprite(new TextureRegion(rabbitTexture, 0, 0, 32, 32));
-        carrotSprite = new Sprite(new TextureRegion(rabbitTexture, 64, 0, 32, 32));
+
+        // Split the texture into individual frames
+        TextureRegion[][] tmp = TextureRegion.split(rabbitTexture,
+            rabbitTexture.getWidth() / 4,
+            rabbitTexture.getHeight() / 1);
+
+        // Put frames into a 1D array
+        TextureRegion[] idleFrames = new TextureRegion[4];
+        for (int i = 0; i < 4; i++) {
+            idleFrames[i] = tmp[0][i];
+        }
+
+        // Create the animation object
+        idleAnimation = new Animation<TextureRegion>(0.15f, idleFrames);
+        stateTime = 0f;
     }
 
     @Override
@@ -95,6 +108,7 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
+        stateTime += delta; // Update animation state time
         stateTimer += delta;
 
         // Process backspace hold
@@ -205,17 +219,23 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Draw the rabbit and carrot sprites with the fade-in alpha
-        float centerX = Gdx.graphics.getWidth() / 2f;
-        float spriteY = (Gdx.graphics.getHeight() / 2f) - 100;
+        // Get the current frame from the animation
+        TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime, true);
 
-        rabbitSprite.setPosition(centerX - 50, spriteY);
-        rabbitSprite.setColor(1.0f, 1.0f, 1.0f, alpha);
-        rabbitSprite.draw(batch);
+        // Define a scaling factor to make the bunny bigger
+        float scaleFactor = 10.0f;
+        float scaledWidth = currentFrame.getRegionWidth() * scaleFactor;
+        float scaledHeight = currentFrame.getRegionHeight() * scaleFactor;
 
-        carrotSprite.setPosition(centerX + 10, spriteY);
-        carrotSprite.setColor(1.0f, 1.0f, 1.0f, alpha);
-        carrotSprite.draw(batch);
+        // Draw the current frame with the new scaled dimensions
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        float bunnyX = (screenWidth - scaledWidth) / 2f;
+        float bunnyY = (screenHeight - scaledHeight) / 2f - 100; // Position below the middle
+
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
+        batch.draw(currentFrame, bunnyX, bunnyY, scaledWidth, scaledHeight);
+        batch.setColor(Color.WHITE); // Reset color to default
 
         batch.end();
     }
