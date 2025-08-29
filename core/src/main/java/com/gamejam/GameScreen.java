@@ -37,6 +37,9 @@ public class GameScreen implements Screen {
     private final PlayerProfile playerProfile;
     private String sessionBestWord = "";
     private int sessionBestWordGuesses = Integer.MAX_VALUE;
+    // New variables for session-specific stats
+    private int sessionWordsSolved = 0;
+    private int sessionGuesses = 0;
 
     // These resources are passed from the Main class
     private SpriteBatch batch;
@@ -542,13 +545,18 @@ public class GameScreen implements Screen {
         // --- DRAW STATS BELOW ANIMATIONS ---
         float statsY = bunnyY - 50;
         font.getData().setScale(0.75f);
-        font.draw(batch, "Total Words Solved: " + playerProfile.getGameStats().getTotalWordsSolved(), leftPadding, statsY);
+        // Display session-specific stats
+        font.draw(batch, "Total Words Solved: " + sessionWordsSolved, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Total Guesses: " + playerProfile.getGameStats().totalGuesses, leftPadding, statsY);
+        font.draw(batch, "Total Guesses: " + sessionGuesses, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", playerProfile.getGameStats().getAverageGuesses()), leftPadding, statsY);
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", (float) sessionGuesses / sessionWordsSolved), leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
+        if (sessionBestWord.equals("")) {
+            font.draw(batch, "Best Word: N/A", leftPadding, statsY);
+        } else {
+            font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
+        }
         font.getData().setScale(1.0f);
         currentWordY = screenHeight - topPadding - 70;
         // Render text for all solved words in a vertical list on the right side
@@ -669,13 +677,17 @@ public class GameScreen implements Screen {
         // --- DRAW STATS BELOW ANIMATIONS ---
         float statsY = bunnyY - 50;
         font.getData().setScale(0.75f);
-        font.draw(batch, "Total Words Solved: " + playerProfile.getGameStats().getTotalWordsSolved(), leftPadding, statsY);
+        font.draw(batch, "Total Words Solved: " + sessionWordsSolved, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Total Guesses: " + playerProfile.getGameStats().totalGuesses, leftPadding, statsY);
+        font.draw(batch, "Total Guesses: " + sessionGuesses, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", playerProfile.getGameStats().getAverageGuesses()), leftPadding, statsY);
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", (float) sessionGuesses / Math.max(1, sessionWordsSolved)), leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
+        if (sessionBestWord.equals("")) {
+            font.draw(batch, "Best Word: N/A", leftPadding, statsY);
+        } else {
+            font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
+        }
         font.getData().setScale(1.0f);
 
         batch.end();
@@ -748,6 +760,9 @@ public class GameScreen implements Screen {
         stateTime = 0f;
         sessionBestWord = "";
         sessionBestWordGuesses = Integer.MAX_VALUE;
+        // Reset session-specific stats
+        sessionWordsSolved = 0;
+        sessionGuesses = 0;
     }
 
     private void loadNextStage() {
@@ -840,6 +855,7 @@ public class GameScreen implements Screen {
 
                     // Increment the total guesses for any submitted word
                     playerProfile.getGameStats().incrementTotalGuesses();
+                    sessionGuesses++;
 
                     if (result != null) {
                         for (int c = 0; c < 5; c++) {
@@ -859,6 +875,7 @@ public class GameScreen implements Screen {
                             currentState = GameState.WIN_ANIMATION;
                             stateTimer = 0;
                             playerProfile.getGameStats().onWordSolved(submittedWord, guesses);
+                            sessionWordsSolved++;
                             updateSessionBestWord(submittedWord, guesses);
                         } else if (gameManager.isGameOver()) {
                             currentRow = board.getCurrentRow();
@@ -935,7 +952,7 @@ public class GameScreen implements Screen {
             sessionBestWord = word;
             sessionBestWordGuesses = guesses;
         } else if (guesses == sessionBestWordGuesses) {
-            sessionBestWord = word;
+            // Keep the first word with the best guess count
         }
     }
 }

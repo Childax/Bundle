@@ -69,9 +69,9 @@ public class StatsScreen implements Screen, InputProcessor {
         font.draw(batch, "Total Words Solved: " + stats.getTotalWordsSolved(), startX, statsY);
         font.draw(batch, "BUNDLEs Solved: " + stats.getBundlesWon(), startX, statsY - 50);
         if (!Objects.equals(stats.getBestWord(), "")) {
-            font.draw(batch, String.format("Best Guess: %s (in %d)", stats.getBestWord(), stats.getBestWordGuesses()), startX, statsY - 100);
+            font.draw(batch, String.format("Best Word: %s (in %d)", stats.getBestWord(), stats.getBestWordGuesses()), startX, statsY - 100);
         } else {
-            font.draw(batch, String.format("Best Guess: %s", "N/A"), startX, statsY - 100);
+            font.draw(batch, String.format("Best Word: %s", "N/A"), startX, statsY - 100);
         }
 
         font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 150);
