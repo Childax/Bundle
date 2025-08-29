@@ -14,11 +14,14 @@ import com.badlogic.gdx.utils.ScreenUtils;
 /**
  * The main menu screen for the game.
  * This screen handles the buttons for selecting the game mode and viewing stats.
+ *
+ * MODIFICATION: Added a button to navigate to the new HowToPlayScreen.
  */
 public class MenuScreen implements Screen, InputProcessor {
 
     private final Main game;
     private final StatsScreen statsScreen;
+    private final HowToPlayScreen howToPlayScreen;
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
@@ -28,14 +31,16 @@ public class MenuScreen implements Screen, InputProcessor {
     private Rectangle bundleButton; // Button for the 6-stage BUNDLE mode
     private Rectangle classicButton; // Button for the classic 1-stage CLASSIC mode
     private Rectangle statsButton; // Button for viewing stats
+    private Rectangle howToPlayButton; // Button for the How To Play screen
     private final float BUTTON_WIDTH = 300;
     private final float BUTTON_HEIGHT = 100;
     private final float BUTTON_CORNER_RADIUS = 20;
     private final float BUTTON_SPACING = 30; // Spacing between buttons
 
-    public MenuScreen(Main game, StatsScreen statsScreen) {
+    public MenuScreen(Main game, StatsScreen statsScreen, HowToPlayScreen howToPlayScreen) {
         this.game = game;
         this.statsScreen = statsScreen;
+        this.howToPlayScreen = howToPlayScreen;
         this.batch = game.getBatch();
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
@@ -46,9 +51,6 @@ public class MenuScreen implements Screen, InputProcessor {
 
     @Override
     public void show() {
-        // This is the crucial fix: set the input processor to this screen
-        // whenever the screen becomes active. This ensures the menu buttons
-        // work after returning from the game over screen.
         Gdx.input.setInputProcessor(this);
     }
 
@@ -68,6 +70,7 @@ public class MenuScreen implements Screen, InputProcessor {
         // Draw the buttons
         drawRoundedButton(bundleButton, "BUNDLE");
         drawRoundedButton(classicButton, "CLASSIC");
+        drawRoundedButton(howToPlayButton, "HOW TO PLAY");
         drawRoundedButton(statsButton, "VIEW STATS");
     }
 
@@ -77,23 +80,18 @@ public class MenuScreen implements Screen, InputProcessor {
      * @param text The text to display on the button.
      */
     private void drawRoundedButton(Rectangle button, String text) {
-        // Draw the start button
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.valueOf("#4C8BF5")); // A nice blue color
+        shapeRenderer.setColor(Color.valueOf("#4C8BF5"));
 
-        // Manual drawing of a rounded rectangle
-        // Draw the central horizontal rectangle
         shapeRenderer.rect(button.x + BUTTON_CORNER_RADIUS, button.y,
             button.width - 2 * BUTTON_CORNER_RADIUS, button.height);
 
-        // Draw the central vertical rectangles
         shapeRenderer.rect(button.x, button.y + BUTTON_CORNER_RADIUS,
             BUTTON_CORNER_RADIUS, button.height - 2 * BUTTON_CORNER_RADIUS);
         shapeRenderer.rect(button.x + button.width - BUTTON_CORNER_RADIUS,
             button.y + BUTTON_CORNER_RADIUS,
             BUTTON_CORNER_RADIUS, button.height - 2 * BUTTON_CORNER_RADIUS);
 
-        // Draw the four corner circles
         shapeRenderer.circle(button.x + BUTTON_CORNER_RADIUS, button.y + BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
         shapeRenderer.circle(button.x + button.width - BUTTON_CORNER_RADIUS, button.y + BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
         shapeRenderer.circle(button.x + BUTTON_CORNER_RADIUS, button.y + button.height - BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
@@ -101,7 +99,6 @@ public class MenuScreen implements Screen, InputProcessor {
 
         shapeRenderer.end();
 
-        // Draw the text on the button
         batch.begin();
         font.setColor(Color.WHITE);
         layout.setText(font, text);
@@ -114,11 +111,13 @@ public class MenuScreen implements Screen, InputProcessor {
     @Override
     public void resize(int width, int height) {
         float startX = (width - BUTTON_WIDTH) / 2;
-        float centerY = (height - BUTTON_HEIGHT) / 2;
+        float centerOffset = BUTTON_HEIGHT + BUTTON_SPACING;
+        float halfSpacing = BUTTON_SPACING / 2;
 
-        bundleButton = new Rectangle(startX, centerY + BUTTON_HEIGHT + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
-        classicButton = new Rectangle(startX, centerY, BUTTON_WIDTH, BUTTON_HEIGHT);
-        statsButton = new Rectangle(startX, centerY - BUTTON_HEIGHT - BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
+        bundleButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 + centerOffset + halfSpacing, BUTTON_WIDTH, BUTTON_HEIGHT);
+        classicButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2, BUTTON_WIDTH, BUTTON_HEIGHT);
+        howToPlayButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 - centerOffset - halfSpacing, BUTTON_WIDTH, BUTTON_HEIGHT);
+        statsButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 - (centerOffset * 2) - BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 
     @Override
@@ -133,13 +132,10 @@ public class MenuScreen implements Screen, InputProcessor {
     @Override
     public void dispose() { }
 
-    // --- InputProcessor methods ---
     @Override
     public boolean keyDown(int keycode) { return false; }
-
     @Override
     public boolean keyUp(int keycode) { return false; }
-
     @Override
     public boolean keyTyped(char character) { return false; }
 
@@ -160,6 +156,11 @@ public class MenuScreen implements Screen, InputProcessor {
             return true;
         }
 
+        if (howToPlayButton.contains(screenX, correctedY)) {
+            game.setScreen(howToPlayScreen);
+            return true;
+        }
+
         if (statsButton.contains(screenX, correctedY)) {
             game.setScreen(statsScreen);
             return true;
@@ -170,16 +171,12 @@ public class MenuScreen implements Screen, InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
-
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
-
     @Override
     public boolean mouseMoved(int screenX, int screenY) { return false; }
-
     @Override
     public boolean scrolled(float amountX, float amountY) { return false; }
-
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
 }

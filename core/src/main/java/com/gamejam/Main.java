@@ -32,6 +32,7 @@ public class Main extends Game {
     public MenuScreen menuScreen; // Made public for easy access
     private GameScreen gameScreen;
     private StatsScreen statsScreen;
+    private HowToPlayScreen howToPlayScreen;
 
     @Override
     public void create() {
@@ -52,8 +53,10 @@ public class Main extends Game {
         playerProfile = new PlayerProfile("Childax");
 
         // Create the initial screens and set the first one
+        howToPlayScreen = new HowToPlayScreen(this);
         statsScreen = new StatsScreen(this, playerProfile);
-        menuScreen = new MenuScreen(this, statsScreen);
+        menuScreen = new MenuScreen(this, statsScreen, howToPlayScreen);
+
         setScreen(menuScreen);
     }
 
