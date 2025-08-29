@@ -40,6 +40,10 @@ public class GameScreen implements Screen {
     // New variables for session-specific stats
     private int sessionWordsSolved = 0;
     private int sessionGuesses = 0;
+    // Timer variable
+    private long startTime;
+    // Variable to store the final elapsed time
+    private float finalElapsedTime;
 
     // These resources are passed from the Main class
     private SpriteBatch batch;
@@ -203,6 +207,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+        // Correctly reset the game state and timer every time the screen is shown
+        reset();
         Gdx.input.setInputProcessor(new GameInputProcessor());
     }
 
@@ -248,6 +254,8 @@ public class GameScreen implements Screen {
                 renderGameOverScene();
                 if (stateTimer >= GAME_OVER_DURATION) {
                     stateTimer = 0;
+                    // Store the final time before transitioning
+                    this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
                     // Transition to the LOSE_SCREEN after the GAME_OVER animation
                     currentState = GameState.LOSE_SCREEN;
                     // Reset animation time for the new scene
@@ -557,6 +565,10 @@ public class GameScreen implements Screen {
         } else {
             font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
         }
+        statsY -= 40;
+        // New line for time elapsed
+        String timeElapsed = String.format("Time Elapsed: %.2f s", finalElapsedTime);
+        font.draw(batch, timeElapsed, leftPadding, statsY);
         font.getData().setScale(1.0f);
         currentWordY = screenHeight - topPadding - 70;
         // Render text for all solved words in a vertical list on the right side
@@ -675,7 +687,7 @@ public class GameScreen implements Screen {
         }
         batch.setColor(Color.WHITE);
         // --- DRAW STATS BELOW ANIMATIONS ---
-        float statsY = bunnyY - 50;
+        float statsY = bunnyY;
         font.getData().setScale(0.75f);
         font.draw(batch, "Total Words Solved: " + sessionWordsSolved, leftPadding, statsY);
         statsY -= 40;
@@ -688,6 +700,10 @@ public class GameScreen implements Screen {
         } else {
             font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
         }
+        statsY -= 40;
+        // New line for time elapsed
+        String timeElapsed = String.format("Time Elapsed: %.2f s", finalElapsedTime);
+        font.draw(batch, timeElapsed, leftPadding, statsY);
         font.getData().setScale(1.0f);
 
         batch.end();
@@ -763,11 +779,16 @@ public class GameScreen implements Screen {
         // Reset session-specific stats
         sessionWordsSolved = 0;
         sessionGuesses = 0;
+        // Start the timer
+        startTime = System.currentTimeMillis();
+        finalElapsedTime = 0.0f;
     }
 
     private void loadNextStage() {
         if (!gameManager.advanceStage()) {
             gameManager.setFinalWin(true);
+            // Store the final time before transitioning, subtracting the animation duration
+            this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
             // Transition to the new WIN_SCREEN instead of GAME_OVER
             currentState = GameState.WIN_SCREEN;
             stateTimer = 0;
@@ -831,6 +852,8 @@ public class GameScreen implements Screen {
             // DEBUG: Press 'W' to instantly go to the win screen
             if (keycode == Input.Keys.W) {
                 gameManager.setFinalWin(true);
+                // Store the final time before transitioning
+                GameScreen.this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
                 currentState = GameState.WIN_SCREEN;
                 stateTimer = 0;
                 stateTime = 0;
@@ -920,6 +943,8 @@ public class GameScreen implements Screen {
             float correctedY = Gdx.graphics.getHeight() - screenY;
             // Handle the QUIT button press
             if (currentState == GameState.PLAYING && quitButtonBounds.contains(screenX, correctedY)) {
+                // Store the final time before transitioning
+                GameScreen.this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
                 currentState = GameState.GAME_OVER;
                 stateTimer = 0;
                 stateTime = 0; // Reset animation time for the death animation
