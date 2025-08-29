@@ -35,6 +35,8 @@ public class GameScreen implements Screen {
     private final Board board;
     private final Keyboard keyboard;
     private final PlayerProfile playerProfile;
+    private String sessionBestWord = "";
+    private int sessionBestWordGuesses = Integer.MAX_VALUE;
 
     // These resources are passed from the Main class
     private SpriteBatch batch;
@@ -73,7 +75,8 @@ public class GameScreen implements Screen {
     // Backspace hold variables
     private boolean isBackspaceHeld = false;
     private float backspaceHoldTimer = 0.0f;
-    private final float INITIAL_BACKSPACE_DELAY = 0.5f; // Delay before the first repeat
+    private final float INITIAL_BACKSPACE_DELAY = 0.5f;
+    // Delay before the first repeat
     private final float REPEAT_BACKSPACE_DELAY = 0.05f;
     // Delay for subsequent repeats
 
@@ -95,7 +98,6 @@ public class GameScreen implements Screen {
     // Using the same name as before for the quit button for consistency.
     private Rectangle menuButtonBounds;
     private Rectangle quitButtonBounds;
-
     // New texture for the goblin
     private Texture goblinCryingTexture;
 
@@ -105,7 +107,6 @@ public class GameScreen implements Screen {
         this.board = board;
         this.keyboard = keyboard;
         this.playerProfile = playerProfile;
-
         // Get shared resources from the Main class
         this.batch = game.getBatch();
         this.shapeRenderer = game.getShapeRenderer();
@@ -188,7 +189,6 @@ public class GameScreen implements Screen {
             quitButtonWidth,
             quitButtonHeight
         );
-
         // Initialize the menu button bounds at the center bottom
         menuButtonBounds = new Rectangle(
             (Gdx.graphics.getWidth() - 250) / 2f,
@@ -540,19 +540,17 @@ public class GameScreen implements Screen {
         batch.setColor(Color.WHITE);
 
         // --- DRAW STATS BELOW ANIMATIONS ---
-        // A placeholder for now, you will need to get the real values
         float statsY = bunnyY - 50;
         font.getData().setScale(0.75f);
-        font.draw(batch, "Total Words Solved: 6", leftPadding, statsY);
+        font.draw(batch, "Total Words Solved: " + playerProfile.getGameStats().getTotalWordsSolved(), leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Total Guesses: 24", leftPadding, statsY);
+        font.draw(batch, "Total Guesses: " + playerProfile.getGameStats().totalGuesses, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Avg. Guesses per Word: 4", leftPadding, statsY);
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", playerProfile.getGameStats().getAverageGuesses()), leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Best Word: (in 2 guesses)", leftPadding, statsY);
+        font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
         font.getData().setScale(1.0f);
         currentWordY = screenHeight - topPadding - 70;
-
         // Render text for all solved words in a vertical list on the right side
         for (int i = 0; i < solvedWords.size(); i++) {
             String word = solvedWords.get(i);
@@ -578,7 +576,6 @@ public class GameScreen implements Screen {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         // Calculate the current alpha for the fade-in effect
         float alpha = Math.min(1.0f, stateTimer / 1.0f);
-
         // Define layout variables
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
@@ -589,7 +586,6 @@ public class GameScreen implements Screen {
         float tileSize = 64f;
         float tileGap = 10f;
         float totalTileWidth = (5 * tileSize) + (4 * tileGap);
-
         // --- FIRST PASS: Draw Shapes ---
         Gdx.gl.glEnable(GL20.GL_BLEND);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -615,7 +611,6 @@ public class GameScreen implements Screen {
         }
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
-
         // --- SECOND PASS: Draw Sprites and Text ---
         batch.begin();
         font.setColor(1.0f, 1.0f, 1.0f, alpha);
@@ -623,12 +618,10 @@ public class GameScreen implements Screen {
         String loseMessage = "You Lose!";
         layout.setText(font, loseMessage);
         font.draw(batch, layout, leftPadding + 80, screenHeight - topPadding + 25);
-
         // Draw the "Words Solved:" text unconditionally
         String solvedTitle = "Words Solved:";
         layout.setText(font, solvedTitle);
         font.draw(batch, layout, screenWidth - rightPadding - layout.width - 40, screenHeight - topPadding + 75);
-
         // Draw the dead bunny and carrot animations unconditionally on the left
         float scaleFactor = 5.0f;
         float carrotScaleFactor = 0.75f;
@@ -638,7 +631,6 @@ public class GameScreen implements Screen {
         float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
         float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * carrotScaleFactor;
         float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * carrotScaleFactor;
-
         float totalSpritesWidth = scaledBunnyWidth + scaledCarrotWidth + 30f;
         float bunnyX = (screenWidth - totalSpritesWidth) / 2f - 200;
         float bunnyY = screenHeight - topPadding - layout.height - scaledBunnyHeight + 50;
@@ -648,7 +640,6 @@ public class GameScreen implements Screen {
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
         batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
         batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
-
         // Draw either the solved words or the goblin image on the right
         if (solvedWords.isEmpty()) {
             // No words solved, show goblin crying
@@ -675,20 +666,19 @@ public class GameScreen implements Screen {
             }
         }
         batch.setColor(Color.WHITE);
-
         // --- DRAW STATS BELOW ANIMATIONS ---
         float statsY = bunnyY - 50;
         font.getData().setScale(0.75f);
-        font.draw(batch, "Total Words Solved: " + solvedWords.size(), leftPadding, statsY);
+        font.draw(batch, "Total Words Solved: " + playerProfile.getGameStats().getTotalWordsSolved(), leftPadding, statsY);
         statsY -= 40;
-        // Placeholder values for Total Guesses and Avg. Guesses per Word
-        font.draw(batch, "Total Guesses: 24", leftPadding, statsY);
+        font.draw(batch, "Total Guesses: " + playerProfile.getGameStats().totalGuesses, leftPadding, statsY);
         statsY -= 40;
-        font.draw(batch, "Avg. Guesses per Word: 4", leftPadding, statsY);
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", playerProfile.getGameStats().getAverageGuesses()), leftPadding, statsY);
+        statsY -= 40;
+        font.draw(batch, "Best Word: " + sessionBestWord + " (in " + sessionBestWordGuesses + ")", leftPadding, statsY);
         font.getData().setScale(1.0f);
 
         batch.end();
-
         // Draw the Back to Menu button
         drawMenuButton("Back to Menu");
     }
@@ -756,6 +746,8 @@ public class GameScreen implements Screen {
         keyboard.reset();
         // Reset stateTime when the game is reset
         stateTime = 0f;
+        sessionBestWord = "";
+        sessionBestWordGuesses = Integer.MAX_VALUE;
     }
 
     private void loadNextStage() {
@@ -846,6 +838,9 @@ public class GameScreen implements Screen {
                     int currentRow = board.getCurrentRow();
                     TileState[] result = board.submitGuess(currentRow);
 
+                    // Increment the total guesses for any submitted word
+                    playerProfile.getGameStats().incrementTotalGuesses();
+
                     if (result != null) {
                         for (int c = 0; c < 5; c++) {
                             char letter = submittedWord.charAt(c);
@@ -853,11 +848,25 @@ public class GameScreen implements Screen {
                         }
 
                         if (gameManager.isStageSolved()) {
+                            currentRow = board.getCurrentRow();
+                            int guesses = 1;
+                            if (currentRow != gameManager.getCurrentStage()) {
+                                guesses = board.getCurrentRow() - (gameManager.getCurrentStage() - 1);
+                            }
+                            System.out.println("Guesses: " + guesses);
                             solvedWords.add(submittedWord);
                             solvedWordStates.add(result);
                             currentState = GameState.WIN_ANIMATION;
                             stateTimer = 0;
+                            playerProfile.getGameStats().onWordSolved(submittedWord, guesses);
+                            updateSessionBestWord(submittedWord, guesses);
                         } else if (gameManager.isGameOver()) {
+                            currentRow = board.getCurrentRow();
+                            int guesses = 1;
+                            if (currentRow != gameManager.getCurrentStage()) {
+                                guesses = board.getCurrentRow() - (gameManager.getCurrentStage() - 1);
+                            }
+                            // The onWordSolved method now correctly handles updating all stats.
                             currentState = GameState.GAME_OVER;
                             stateTimer = 0;
                             // Reset the animation timer specifically for the death animation
@@ -885,13 +894,13 @@ public class GameScreen implements Screen {
         }
 
         @Override
-        public boolean keyTyped(char character) { return false; }
+        public boolean keyTyped(char character) { return false;
+        }
 
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
             // Adjust the screenY coordinate for libGDX's inverted Y-axis
             float correctedY = Gdx.graphics.getHeight() - screenY;
-
             // Handle the QUIT button press
             if (currentState == GameState.PLAYING && quitButtonBounds.contains(screenX, correctedY)) {
                 currentState = GameState.GAME_OVER;
@@ -909,10 +918,24 @@ public class GameScreen implements Screen {
         }
 
         @Override
-        public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
-        public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
-        public boolean mouseMoved(int screenX, int screenY) { return false; }
-        public boolean scrolled(float amountX, float amountY) { return false; }
-        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false;
+        }
+        public boolean touchDragged(int screenX, int screenY, int pointer) { return false;
+        }
+        public boolean mouseMoved(int screenX, int screenY) { return false;
+        }
+        public boolean scrolled(float amountX, float amountY) { return false;
+        }
+        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false;
+        }
+    }
+
+    private void updateSessionBestWord(String word, int guesses) {
+        if (guesses < sessionBestWordGuesses) {
+            sessionBestWord = word;
+            sessionBestWordGuesses = guesses;
+        } else if (guesses == sessionBestWordGuesses) {
+            sessionBestWord = word;
+        }
     }
 }

@@ -10,10 +10,11 @@ import java.util.List;
 public class GameStats {
     // Basic game stats
     public int totalWordsSolved;
-    public int totalGuesses;
+    public int totalGuesses; // This now counts all guesses, including failed attempts
     public long totalTimeInSeconds; // Total time spent in game
     public int bundlesSolved;
     public double averageGuessPerWord;
+    public int totalGuessesForSolvedWords; // New variable for the average calculation
 
     // Stats for "best word guessed"
     public String bestWord;
@@ -25,6 +26,7 @@ public class GameStats {
     public GameStats() {
         this.totalWordsSolved = 0;
         this.totalGuesses = 0;
+        this.totalGuessesForSolvedWords = 0;
         this.totalTimeInSeconds = 0;
         this.bestWord = "";
         this.bundlesSolved = 0;
@@ -40,6 +42,7 @@ public class GameStats {
     public void reset() {
         this.totalWordsSolved = 0;
         this.totalGuesses = 0;
+        this.totalGuessesForSolvedWords = 0;
         this.totalTimeInSeconds = 0;
         this.bestWord = "";
         this.bestWordGuesses = Integer.MAX_VALUE;
@@ -47,13 +50,21 @@ public class GameStats {
     }
 
     /**
+     * Updates the total guess count. This should be called every time a guess is made.
+     */
+    public void incrementTotalGuesses() {
+        this.totalGuesses++;
+    }
+
+    /**
      * Updates the stats after a word is successfully solved.
      * @param guesses The number of guesses it took to solve the current word.
      */
-    public void onWordSolved(int guesses) {
+    public void onWordSolved(String word, int guesses) {
         totalWordsSolved++;
-        totalGuesses += guesses;
+        totalGuessesForSolvedWords += guesses;
         guessesPerWord.add(guesses);
+        updateBestWord(word, guesses);
     }
 
     /**
@@ -65,6 +76,8 @@ public class GameStats {
         if (guesses < bestWordGuesses) {
             bestWord = word;
             bestWordGuesses = guesses;
+        } else if (guesses == bestWordGuesses) {
+            bestWord = word;
         }
     }
 
@@ -76,7 +89,7 @@ public class GameStats {
         if (totalWordsSolved == 0) {
             return 0.0;
         }
-        return (double) totalGuesses / totalWordsSolved;
+        return (double) totalGuessesForSolvedWords / totalWordsSolved;
     }
 
     public int getBundlesWon() {

@@ -74,7 +74,7 @@ public class StatsScreen implements Screen, InputProcessor {
             font.draw(batch, String.format("Best Guess: %s", "N/A"), startX, statsY - 100);
         }
 
-        font.draw(batch, "Average Guesses per Word Solved: " + stats.getAverageGuesses(), startX, statsY - 150);
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 150);
 
         // TODO: Add more stats here
 
