@@ -23,9 +23,14 @@ public class Main extends Game {
     private Board board;
     private Keyboard keyboard;
 
+    // The player profile object that persists across all screens.
+    private PlayerProfile playerProfile;
+
     // You can add other screens here as they are created.
     public MenuScreen menuScreen; // Made public for easy access
     private GameScreen gameScreen;
+    private StatsScreen statsScreen;
+    // Add other screens here as they are created.
 
     @Override
     public void create() {
@@ -39,8 +44,13 @@ public class Main extends Game {
         board = new Board(gameManager);
         keyboard = new Keyboard();
 
+        // Instantiate the player profile here. This ensures it only happens once.
+        // For now, we'll just give it a default name.
+        playerProfile = new PlayerProfile("Childax");
+
         // Create the initial screen and set it
-        menuScreen = new MenuScreen(this);
+        statsScreen = new StatsScreen(this, playerProfile);
+        menuScreen = new MenuScreen(this, statsScreen);
         setScreen(menuScreen);
     }
 
@@ -54,7 +64,8 @@ public class Main extends Game {
         // If the GameScreen hasn't been created yet, create it.
         // This avoids creating it until it's needed.
         if (gameScreen == null) {
-            gameScreen = new GameScreen(this, gameManager, board, keyboard);
+            // Pass the playerProfile to the GameScreen
+            gameScreen = new GameScreen(this, gameManager, board, keyboard, playerProfile);
         } else {
             // If it already exists, reset its state for a new game
             gameScreen.reset();

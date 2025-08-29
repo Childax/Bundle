@@ -1,0 +1,162 @@
+package com.gamejam;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.ScreenUtils;
+
+import java.util.Objects;
+
+/**
+ * A screen to display the player's game statistics.
+ */
+public class StatsScreen implements Screen, InputProcessor {
+
+    private final Main game;
+    private final PlayerProfile playerProfile;
+    private SpriteBatch batch;
+    private ShapeRenderer shapeRenderer;
+    private BitmapFont font;
+    private final GlyphLayout layout = new GlyphLayout();
+
+    // Back button properties
+    private Rectangle backButton;
+    private final float BUTTON_WIDTH = 200;
+    private final float BUTTON_HEIGHT = 75;
+    private final float BUTTON_CORNER_RADIUS = 15;
+
+    public StatsScreen(Main game, PlayerProfile playerProfile) {
+        this.game = game;
+        this.playerProfile = playerProfile;
+        this.batch = game.getBatch();
+        this.shapeRenderer = game.getShapeRenderer();
+        this.font = game.getFont();
+        // Position the back button at the bottom center of the screen
+        float backX = (Gdx.graphics.getWidth() - BUTTON_WIDTH) / 2;
+        float backY = 50;
+        backButton = new Rectangle(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT);
+    }
+
+    @Override
+    public void show() {
+        Gdx.input.setInputProcessor(this);
+    }
+
+    @Override
+    public void render(float delta) {
+        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+        float startX = (Gdx.graphics.getWidth()) / 2f - 400;
+        // Draw the title
+        batch.begin();
+        font.setColor(Color.WHITE);
+        layout.setText(font, "PLAYER STATS");
+        float titleX = startX;
+        float titleY = Gdx.graphics.getHeight() - 150;
+        font.draw(batch, "PLAYER STATS", titleX, titleY);
+
+        // Draw the stats
+        this.font.getData().setScale(0.7f);
+        GameStats stats = playerProfile.getGameStats();
+        float statsY = Gdx.graphics.getHeight() - 300;
+
+        font.setColor(Color.WHITE);
+        font.draw(batch, "Total Words Solved: " + stats.getTotalWordsSolved(), startX, statsY);
+        font.draw(batch, "BUNDLEs Solved: " + stats.getBundlesWon(), startX, statsY - 50);
+        if (!Objects.equals(stats.getBestWord(), "")) {
+            font.draw(batch, String.format("Best Guess: %s (in %d)", stats.getBestWord(), stats.getBestWordGuesses()), startX, statsY - 100);
+        } else {
+            font.draw(batch, String.format("Best Guess: %s", "N/A"), startX, statsY - 100);
+        }
+
+        font.draw(batch, "Average Guesses per Word Solved: " + stats.getAverageGuesses(), startX, statsY - 150);
+
+        // TODO: Add more stats here
+
+        batch.end();
+        this.font.getData().setScale(1f);
+        // Draw the back button
+        drawRoundedButton(backButton, "BACK");
+    }
+
+    /**
+     * Helper method to draw a rounded rectangle button with text.
+     * @param button The Rectangle defining the button bounds.
+     * @param text The text to display on the button.
+     */
+    private void drawRoundedButton(Rectangle button, String text) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.valueOf("#4C8BF5"));
+        shapeRenderer.rect(button.x + BUTTON_CORNER_RADIUS, button.y,
+            button.width - 2 * BUTTON_CORNER_RADIUS, button.height);
+        shapeRenderer.rect(button.x, button.y + BUTTON_CORNER_RADIUS,
+            BUTTON_CORNER_RADIUS, button.height - 2 * BUTTON_CORNER_RADIUS);
+        shapeRenderer.rect(button.x + button.width - BUTTON_CORNER_RADIUS,
+            button.y + BUTTON_CORNER_RADIUS,
+            BUTTON_CORNER_RADIUS, button.height - 2 * BUTTON_CORNER_RADIUS);
+        shapeRenderer.circle(button.x + BUTTON_CORNER_RADIUS, button.y + BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
+        shapeRenderer.circle(button.x + button.width - BUTTON_CORNER_RADIUS, button.y + BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
+        shapeRenderer.circle(button.x + BUTTON_CORNER_RADIUS, button.y + button.height - BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
+        shapeRenderer.circle(button.x + button.width - BUTTON_CORNER_RADIUS, button.y + button.height - BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS);
+        shapeRenderer.end();
+
+        batch.begin();
+        font.setColor(Color.WHITE);
+        layout.setText(font, text);
+        float buttonTextX = button.x + (button.width - layout.width) / 2;
+        float buttonTextY = button.y + (button.height + layout.height) / 2;
+        font.draw(batch, text, buttonTextX, buttonTextY);
+        batch.end();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        backButton.x = (width - BUTTON_WIDTH) / 2;
+    }
+
+    @Override
+    public void pause() { }
+
+    @Override
+    public void resume() { }
+
+    @Override
+    public void hide() { }
+
+    @Override
+    public void dispose() { }
+
+    // --- InputProcessor methods ---
+    @Override
+    public boolean keyDown(int keycode) { return false; }
+    @Override
+    public boolean keyUp(int keycode) { return false; }
+    @Override
+    public boolean keyTyped(char character) { return false; }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        int correctedY = Gdx.graphics.getHeight() - screenY;
+        if (backButton.contains(screenX, correctedY)) {
+            game.setScreen(game.menuScreen);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) { return false; }
+    @Override
+    public boolean scrolled(float amountX, float amountY) { return false; }
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
+}

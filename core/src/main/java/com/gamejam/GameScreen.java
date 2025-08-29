@@ -17,7 +17,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 
-import java.security.cert.CollectionCertStoreParameters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +34,7 @@ public class GameScreen implements Screen {
     private final GameManager gameManager;
     private final Board board;
     private final Keyboard keyboard;
+    private final PlayerProfile playerProfile;
 
     // These resources are passed from the Main class
     private SpriteBatch batch;
@@ -99,11 +99,12 @@ public class GameScreen implements Screen {
     // New texture for the goblin
     private Texture goblinCryingTexture;
 
-    public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard) {
+    public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard, PlayerProfile playerProfile) {
         this.game = game;
         this.gameManager = gameManager;
         this.board = board;
         this.keyboard = keyboard;
+        this.playerProfile = playerProfile;
 
         // Get shared resources from the Main class
         this.batch = game.getBatch();
@@ -884,10 +885,7 @@ public class GameScreen implements Screen {
         }
 
         @Override
-        public boolean keyTyped(char character) {
-            // Unused, but required by the InputProcessor interface
-            return false;
-        }
+        public boolean keyTyped(char character) { return false; }
 
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
@@ -911,29 +909,10 @@ public class GameScreen implements Screen {
         }
 
         @Override
-        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-            return false;
-        }
-
-        @Override
-        public boolean touchDragged(int screenX, int screenY, int pointer) {
-            return false;
-        }
-
-        @Override
-        public boolean mouseMoved(int screenX, int screenY) {
-            return false;
-        }
-
-        @Override
-        public boolean scrolled(float amountX, float amountY) {
-            return false;
-        }
-
-        @Override
-        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
-            // Unused, but required by the InputProcessor interface
-            return false;
-        }
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
+        public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
+        public boolean mouseMoved(int screenX, int screenY) { return false; }
+        public boolean scrolled(float amountX, float amountY) { return false; }
+        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
     }
 }
