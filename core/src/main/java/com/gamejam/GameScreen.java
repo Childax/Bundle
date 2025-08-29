@@ -14,8 +14,12 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
+
+import java.security.cert.CollectionCertStoreParameters;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,14 +43,18 @@ public class GameScreen implements Screen {
     // Variables for the spritesheet and animation
     private Texture rabbitIdleTexture;
     private Texture rabbitDeathTexture;
+    private Texture rabbitDashTexture;
     private Animation<TextureRegion> idleAnimation;
     private Animation<TextureRegion> deathAnimation;
+    private Animation<TextureRegion> dashAnimation;
 
     // Variables for the carrot animation
     private List<Texture> carrotIdleTextures = new ArrayList<>();
     private List<Texture> carrotDeathTextures = new ArrayList<>();
+    private List<Texture> carrotSpinTextures = new ArrayList<>();
     private Animation<TextureRegion> carrotIdleAnimation;
     private Animation<TextureRegion> carrotDeathAnimation;
+    private Animation<TextureRegion> carrotSpinAnimation;
     private float stateTime; // Timer to keep track of the animation's state
 
     // An enumeration of the different game states within this screen
@@ -54,7 +62,8 @@ public class GameScreen implements Screen {
         PLAYING,
         WIN_ANIMATION, // New state to show the all-green board before transition
         STAGE_COMPLETE,
-        GAME_OVER
+        GAME_OVER,
+        WIN_SCREEN // The new final win screen state
     }
 
     private GameState currentState = GameState.PLAYING;
@@ -78,6 +87,8 @@ public class GameScreen implements Screen {
     private static final float STAGE_COMPLETE_DURATION = 5.0f; // Total duration for the win text display
     private static final float GAME_OVER_DURATION = 5.0f; // Total duration for the game over text display
 
+    // Back to Menu button bounds. Using the same name as before for the quit button for consistency.
+    private Rectangle menuButtonBounds;
 
     public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard) {
         this.game = game;
@@ -114,14 +125,25 @@ public class GameScreen implements Screen {
         }
         deathAnimation = new Animation<TextureRegion>(0.15f, deathFrames);
 
+        // --- LOAD RABBIT DASH ANIMATION ---
+        rabbitDashTexture = new Texture(Gdx.files.internal("bunny/Spritesheets/spritesheet dash.png"));
+        TextureRegion[][] dashTmp = TextureRegion.split(rabbitDashTexture,
+            rabbitDashTexture.getWidth() / 4,
+            rabbitDashTexture.getHeight() / 1);
+        TextureRegion[] dashFrames = new TextureRegion[4];
+        for (int i = 0; i < 4; i++) {
+            dashFrames[i] = dashTmp[0][i];
+        }
+        dashAnimation = new Animation<TextureRegion>(0.15f, dashFrames);
+
 
         // --- LOAD CARROT IDLE ANIMATION ---
         TextureRegion[] carrotIdleFrames = new TextureRegion[5];
         for (int i = 0; i < 5; i++) {
-            String carrotIdlePath = "carrot/Idle/Idle" + (i+1) + ".png";
+            String carrotIdlePath = "carrot/Idle/Idle" + (i + 1) + ".png";
             Texture frameTexture = new Texture(Gdx.files.internal(carrotIdlePath));
             carrotIdleTextures.add(frameTexture);
-            TextureRegion carrotRegion  = new TextureRegion(frameTexture);
+            TextureRegion carrotRegion = new TextureRegion(frameTexture);
             carrotRegion.flip(true, false);
             carrotIdleFrames[i] = carrotRegion;
         }
@@ -130,7 +152,7 @@ public class GameScreen implements Screen {
         // --- LOAD CARROT DEATH ANIMATION ---
         TextureRegion[] carrotDeathFrames = new TextureRegion[8];
         for (int i = 0; i < 8; i++) {
-            String carrotDeathPath = "carrot/Death/Death" + (i+1) + ".png";
+            String carrotDeathPath = "carrot/Death/Death" + (i + 1) + ".png";
             Texture frameTexture = new Texture(Gdx.files.internal(carrotDeathPath));
             carrotDeathTextures.add(frameTexture);
             TextureRegion carrotRegion = new TextureRegion(frameTexture);
@@ -138,6 +160,26 @@ public class GameScreen implements Screen {
             carrotDeathFrames[i] = carrotRegion;
         }
         carrotDeathAnimation = new Animation<TextureRegion>(0.15f, carrotDeathFrames);
+
+        // --- LOAD CARROT SPIN ANIMATION ---
+        TextureRegion[] carrotSpinFrames = new TextureRegion[20];
+        for (int i = 0; i < 20; i++) {
+            String carrotSpinPath = "carrot/Spin/Carrot" + (i + 1) + ".png";
+            Texture frameTexture = new Texture(Gdx.files.internal(carrotSpinPath));
+            carrotSpinTextures.add(frameTexture);
+            TextureRegion carrotRegion = new TextureRegion(frameTexture);
+            carrotRegion.flip(true, false);
+            carrotSpinFrames[i] = carrotRegion;
+        }
+        carrotSpinAnimation = new Animation<TextureRegion>(0.15f, carrotSpinFrames);
+
+        // Initialize the quit/menu button bounds
+        menuButtonBounds = new Rectangle(
+            (Gdx.graphics.getWidth() - 250) / 2f,
+            20,
+            250,
+            50
+        );
     }
 
     @Override
@@ -187,9 +229,11 @@ public class GameScreen implements Screen {
                 break;
             case GAME_OVER:
                 renderGameOverScene();
-                if (stateTimer >= GAME_OVER_DURATION) {
-                    game.setScreen(game.menuScreen);
-                }
+                // The screen no longer auto-transitions to the menu
+                break;
+            case WIN_SCREEN:
+                renderWinScreen();
+                // The screen no longer auto-transitions to the menu
                 break;
         }
     }
@@ -203,6 +247,8 @@ public class GameScreen implements Screen {
         board.render(batch, shapeRenderer, font, 1.0f); // Pass alpha of 1.0 since it's a non-fading state
         keyboard.render(batch, shapeRenderer, keyboardFont, 1024);
         drawStageNumber();
+        // Draw the Quit button
+        drawQuitButton();
     }
 
     /**
@@ -280,7 +326,8 @@ public class GameScreen implements Screen {
         float scaledBunnyWidth = currentBunnyFrame.getRegionWidth() * scaleFactor;
         float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
         float screenWidth = Gdx.graphics.getWidth();
-        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f + 30;
+        // Adjust bunnyX to be properly centered
+        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f;
         float bunnyY = centerY + 20;
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
         batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
@@ -291,7 +338,7 @@ public class GameScreen implements Screen {
         float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * (scaleFactor - 2);
         float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * (scaleFactor - 2);
         // Position the carrot to the left of the bunny
-        float carrotX = bunnyX - 20;
+        float carrotX = bunnyX - scaledCarrotWidth + 200;
         float carrotY = bunnyY + 20;
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
         batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
@@ -368,7 +415,8 @@ public class GameScreen implements Screen {
         float scaledBunnyWidth = currentBunnyFrame.getRegionWidth() * scaleFactor;
         float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
         float screenWidth = Gdx.graphics.getWidth();
-        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f + 30;
+        // Adjust bunnyX to be properly centered
+        float bunnyX = (screenWidth - scaledBunnyWidth) / 2f;
         float bunnyY = centerY + 20;
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
         batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
@@ -379,15 +427,136 @@ public class GameScreen implements Screen {
         float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * (scaleFactor - 2);
         float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * (scaleFactor - 2);
         // Position the carrot to the left of the bunny
-        float carrotX = bunnyX - 20;
+        float carrotX = bunnyX - scaledCarrotWidth + 200;
         float carrotY = bunnyY + 20;
         batch.setColor(1.0f, 1.0f, 1.0f, alpha);
         batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
         batch.setColor(Color.WHITE); // Reset color to default
 
         batch.end();
+        // Draw the Back to Menu button
+        drawMenuButton("Back to Menu");
     }
 
+    private void renderWinScreen() {
+        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+
+        // Calculate the current alpha for the fade-in effect
+        float alpha = Math.min(1.0f, stateTimer / 1.0f); // Fades in over 1 second
+
+        // Define layout variables
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        float leftPadding = screenWidth * 0.1f;
+        float rightPadding = screenWidth * 0.1f;
+        float topPadding = screenHeight * 0.2f;
+        float wordSpacing = 20f;
+        float tileSize = 64f;
+        float tileGap = 10f;
+        float totalTileWidth = (5 * tileSize) + (4 * tileGap);
+
+        // --- FIRST PASS: Draw Shapes (FOR TILES AND BACKGROUND) ---
+        Gdx.gl.glEnable(GL20.GL_BLEND); // Enable blending for transparency
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.1f, 0.1f, 0.15f, alpha);
+        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
+
+        // Render shapes for all solved words in a vertical list on the right side
+        float currentWordY = screenHeight - topPadding - 70;
+
+        for (int i = 0; i < solvedWords.size(); i++) {
+            String word = solvedWords.get(i);
+            TileState[] states = solvedWordStates.get(i);
+
+            float wordTileStartX = screenWidth - rightPadding - totalTileWidth;
+
+            // Render shapes for each tile in the word
+            for (int j = 0; j < word.length(); j++) {
+                Tile tile = new Tile();
+                tile.setLetter(word.charAt(j));
+                tile.setState(states[j]);
+                tile.renderShape(shapeRenderer, wordTileStartX + (j * (tileSize + tileGap)), currentWordY, tileSize, 1.0f, alpha);
+            }
+            currentWordY -= (tileSize + wordSpacing);
+        }
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND); // Disable blending after we're done with transparent shapes
+
+        // --- SECOND PASS: Draw Sprites and Text ---
+        batch.begin();
+        font.setColor(1.0f, 1.0f, 1.0f, alpha);
+
+        // Draw the "You Win!" text on the left side
+        String winMessage = "You Win!";
+        layout.setText(font, winMessage);
+        font.draw(batch, layout, leftPadding + 80, screenHeight - topPadding + 25);
+
+        // Draw the "Words Solved:" text on the right side, right-aligned
+        String solvedTitle = "Words Solved:";
+        layout.setText(font, solvedTitle);
+        font.draw(batch, layout, screenWidth - rightPadding - layout.width - 40, screenHeight - topPadding + 75);
+
+        // --- DRAW THE BUNNY DASH ANIMATION ---
+        TextureRegion currentBunnyFrame = dashAnimation.getKeyFrame(stateTime, true);
+        float scaleFactor = 5.0f;
+        float scaledBunnyWidth = currentBunnyFrame.getRegionWidth() * scaleFactor;
+        float scaledBunnyHeight = currentBunnyFrame.getRegionHeight() * scaleFactor;
+
+        // --- DRAW THE CARROT SPIN ANIMATION ---
+        TextureRegion currentCarrotFrame = carrotSpinAnimation.getKeyFrame(stateTime, true);
+        float carrotScaleFactor = 0.75f;
+        float scaledCarrotWidth = currentCarrotFrame.getRegionWidth() * carrotScaleFactor;
+        float scaledCarrotHeight = currentCarrotFrame.getRegionHeight() * carrotScaleFactor;
+
+        // Calculate combined width and position to center both sprites
+        float totalSpritesWidth = scaledBunnyWidth + scaledCarrotWidth + 30f; // 50f for gap
+        float bunnyX = (screenWidth - totalSpritesWidth) / 2f - 100;
+        float bunnyY = screenHeight - topPadding - layout.height - scaledBunnyHeight + 100;
+        float carrotX = bunnyX + scaledBunnyWidth - 350f;
+        float carrotY = bunnyY + 20;
+
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
+        batch.draw(currentBunnyFrame, bunnyX, bunnyY, scaledBunnyWidth, scaledBunnyHeight);
+        batch.draw(currentCarrotFrame, carrotX, carrotY, scaledCarrotWidth, scaledCarrotHeight);
+        batch.setColor(Color.WHITE);
+
+        // --- DRAW STATS BELOW ANIMATIONS ---
+        // A placeholder for now, you will need to get the real values
+        float statsY = bunnyY - 50;
+        font.getData().setScale(0.75f);
+        font.draw(batch, "Total Words Solved: 6", leftPadding, statsY);
+        statsY -= 40;
+        font.draw(batch, "Total Guesses: 24", leftPadding, statsY);
+        statsY -= 40;
+        font.draw(batch, "Avg. Guesses per Word: 4", leftPadding, statsY);
+        statsY -= 40;
+        font.draw(batch, "Best Word: (in 2 guesses)", leftPadding, statsY);
+        font.getData().setScale(1.0f);
+
+
+        currentWordY = screenHeight - topPadding - 70;
+
+        // Render text for all solved words in a vertical list on the right side
+        for (int i = 0; i < solvedWords.size(); i++) {
+            String word = solvedWords.get(i);
+            TileState[] states = solvedWordStates.get(i);
+
+            float wordTileStartX = screenWidth - rightPadding - totalTileWidth;
+
+            for (int j = 0; j < word.length(); j++) {
+                Tile tile = new Tile();
+                tile.setLetter(word.charAt(j));
+                tile.setState(states[j]);
+                tile.renderText(batch, font, wordTileStartX + (j * (tileSize + tileGap)), currentWordY, tileSize, alpha);
+            }
+            currentWordY -= (tileSize + wordSpacing);
+        }
+
+        batch.end();
+
+        // Draw the Back to Menu button
+        drawMenuButton("Back to Menu");
+    }
 
     private void drawStageNumber() {
         // These begin/end calls are correct here because it's a single, self-contained draw action
@@ -403,6 +572,46 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
+    /**
+     * Draws the quit button on the playing screen.
+     */
+    private void drawQuitButton() {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.5f, 0.1f, 0.1f, 1f);
+        shapeRenderer.rect(menuButtonBounds.x, menuButtonBounds.y, menuButtonBounds.width, menuButtonBounds.height);
+        shapeRenderer.end();
+
+        batch.begin();
+        keyboardFont.setColor(Color.WHITE);
+        String quitText = "QUIT";
+        layout.setText(keyboardFont, quitText);
+        float textX = menuButtonBounds.x + (menuButtonBounds.width - layout.width) / 2;
+        float textY = menuButtonBounds.y + (menuButtonBounds.height + layout.height) / 2;
+        keyboardFont.draw(batch, quitText, textX, textY);
+        batch.end();
+    }
+
+    /**
+     * Draws the general purpose menu button.
+     *
+     * @param buttonText The text to display on the button.
+     */
+    private void drawMenuButton(String buttonText) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.2f, 0.4f, 0.6f, 1f);
+        shapeRenderer.rect(menuButtonBounds.x, menuButtonBounds.y, menuButtonBounds.width, menuButtonBounds.height);
+        shapeRenderer.end();
+
+        batch.begin();
+        keyboardFont.setColor(Color.WHITE);
+        layout.setText(keyboardFont, buttonText);
+        float textX = menuButtonBounds.x + (menuButtonBounds.width - layout.width) / 2;
+        float textY = menuButtonBounds.y + (menuButtonBounds.height + layout.height) / 2;
+        keyboardFont.draw(batch, buttonText, textX, textY);
+        batch.end();
+    }
+
+
     public void reset() {
         solvedWords.clear();
         solvedWordStates.clear();
@@ -417,7 +626,10 @@ public class GameScreen implements Screen {
     private void loadNextStage() {
         if (!gameManager.advanceStage()) {
             gameManager.setFinalWin(true);
-            currentState = GameState.GAME_OVER;
+            // Transition to the new WIN_SCREEN instead of GAME_OVER
+            currentState = GameState.WIN_SCREEN;
+            stateTimer = 0;
+            stateTime = 0; // Reset animation time for the new scene
         } else {
             board.reset();
             keyboard.reset();
@@ -457,6 +669,7 @@ public class GameScreen implements Screen {
     public void dispose() {
         rabbitIdleTexture.dispose();
         rabbitDeathTexture.dispose();
+        rabbitDashTexture.dispose();
         // Dispose of each carrot texture in the list
         for (Texture texture : carrotIdleTextures) {
             texture.dispose();
@@ -464,11 +677,30 @@ public class GameScreen implements Screen {
         for (Texture texture : carrotDeathTextures) {
             texture.dispose();
         }
+        for (Texture texture : carrotSpinTextures) {
+            texture.dispose();
+        }
     }
 
     private class GameInputProcessor implements InputProcessor {
         @Override
         public boolean keyDown(int keycode) {
+            // DEBUG: Press 'W' to instantly go to the win screen
+            if (keycode == Input.Keys.W) {
+                gameManager.setFinalWin(true);
+                currentState = GameState.WIN_SCREEN;
+                stateTimer = 0;
+                stateTime = 0;
+                // Iterate through all stage words and add them to the solvedWords list
+                for (String word : gameManager.getStageWords()) {
+                    solvedWords.add(word.toUpperCase());
+                    // CRITICAL FIX: Generate the 'all green' state for each word
+                    TileState[] states = WordChecker.checkWord(word.toUpperCase(), word.toUpperCase());
+                    solvedWordStates.add(states);
+                }
+                return true;
+            }
+
             if (currentState == GameState.PLAYING) {
                 if (keycode >= Input.Keys.A && keycode <= Input.Keys.Z) {
                     char letter = (char) ('A' + (keycode - Input.Keys.A));
@@ -516,12 +748,59 @@ public class GameScreen implements Screen {
             return false;
         }
 
-        @Override public boolean keyTyped(char character) { return false; }
-        @Override public boolean touchDown(int screenX, int screenY, int pointer, int button) { return false; }
-        @Override public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
-        @Override public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
-        @Override public boolean mouseMoved(int screenX, int screenY) { return false; }
-        @Override public boolean scrolled(float amountX, float amountY) { return false; }
-        @Override public boolean touchCancelled(int x, int y, int z, int button) { return false; }
+        @Override
+        public boolean keyTyped(char character) {
+            // Unused, but required by the InputProcessor interface
+            return false;
+        }
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            // Adjust the screenY coordinate for libGDX's inverted Y-axis
+            float correctedY = Gdx.graphics.getHeight() - screenY;
+
+            // Check for the menu button press from any state
+            if (menuButtonBounds.contains(screenX, correctedY)) {
+                // If it's a "QUIT" button in the PLAYING state, go to the GAME_OVER screen.
+                if (currentState == GameState.PLAYING) {
+                    currentState = GameState.GAME_OVER;
+                    stateTimer = 0;
+                    stateTime = 0; // Reset animation time for the death animation
+                    return true;
+                }
+                // If it's a "Back to Menu" button in GAME_OVER or WIN_SCREEN states, go to menu.
+                if (currentState == GameState.GAME_OVER || currentState == GameState.WIN_SCREEN) {
+                    game.setScreen(game.menuScreen);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+            return false;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) {
+            return false;
+        }
+
+        @Override
+        public boolean mouseMoved(int screenX, int screenY) {
+            return false;
+        }
+
+        @Override
+        public boolean scrolled(float amountX, float amountY) {
+            return false;
+        }
+
+        @Override
+        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+            // Unused, but required by the InputProcessor interface
+            return false;
+        }
     }
 }
