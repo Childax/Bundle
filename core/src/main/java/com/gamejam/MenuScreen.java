@@ -1,7 +1,6 @@
 package com.gamejam;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
@@ -14,7 +13,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 /**
  * The main menu screen for the game.
- * This screen handles the start button and provides a way to initiate the game.
+ * This screen handles the buttons for selecting the game mode and viewing stats.
  */
 public class MenuScreen implements Screen, InputProcessor {
 
@@ -25,9 +24,10 @@ public class MenuScreen implements Screen, InputProcessor {
     private BitmapFont font;
     private final GlyphLayout layout = new GlyphLayout();
 
-    // Start button properties
-    private Rectangle startButton;
-    private Rectangle statsButton; // New button for viewing stats
+    // Button properties
+    private Rectangle bundleButton; // Button for the 6-stage BUNDLE mode
+    private Rectangle classicButton; // Button for the classic 1-stage CLASSIC mode
+    private Rectangle statsButton; // Button for viewing stats
     private final float BUTTON_WIDTH = 300;
     private final float BUTTON_HEIGHT = 100;
     private final float BUTTON_CORNER_RADIUS = 20;
@@ -39,14 +39,9 @@ public class MenuScreen implements Screen, InputProcessor {
         this.batch = game.getBatch();
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
-        // The start button is centered on the screen.
-        float startX = (Gdx.graphics.getWidth() - BUTTON_WIDTH) / 2;
-        float startY = (Gdx.graphics.getHeight() - BUTTON_HEIGHT) / 2;
-        startButton = new Rectangle(startX, startY, BUTTON_WIDTH, BUTTON_HEIGHT);
 
-        // Position the stats button below the start button
-        float statsY = startY - BUTTON_HEIGHT - BUTTON_SPACING;
-        statsButton = new Rectangle(startX, statsY, BUTTON_WIDTH, BUTTON_HEIGHT);
+        // Position the buttons
+        resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
@@ -64,14 +59,15 @@ public class MenuScreen implements Screen, InputProcessor {
         // Draw the title
         batch.begin();
         font.setColor(Color.WHITE);
-        layout.setText(font, "BUNDLE");
+        layout.setText(font, "MAIN MENU");
         float titleX = (Gdx.graphics.getWidth() - layout.width) / 2;
         float titleY = Gdx.graphics.getHeight() - 100;
-        font.draw(batch, "BUNDLE", titleX, titleY);
+        font.draw(batch, "MAIN MENU", titleX, titleY);
         batch.end();
 
-        // Draw the start button and stats button
-        drawRoundedButton(startButton, "START GAME");
+        // Draw the buttons
+        drawRoundedButton(bundleButton, "BUNDLE");
+        drawRoundedButton(classicButton, "CLASSIC");
         drawRoundedButton(statsButton, "VIEW STATS");
     }
 
@@ -117,11 +113,12 @@ public class MenuScreen implements Screen, InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        // Update button position on resize to keep it centered
-        startButton.x = (width - BUTTON_WIDTH) / 2;
-        startButton.y = (height - BUTTON_HEIGHT) / 2 + (BUTTON_HEIGHT + BUTTON_SPACING) / 2;
-        statsButton.x = (width - BUTTON_WIDTH) / 2;
-        statsButton.y = (height - BUTTON_HEIGHT) / 2 - (BUTTON_HEIGHT + BUTTON_SPACING) / 2;
+        float startX = (width - BUTTON_WIDTH) / 2;
+        float centerY = (height - BUTTON_HEIGHT) / 2;
+
+        bundleButton = new Rectangle(startX, centerY + BUTTON_HEIGHT + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
+        classicButton = new Rectangle(startX, centerY, BUTTON_WIDTH, BUTTON_HEIGHT);
+        statsButton = new Rectangle(startX, centerY - BUTTON_HEIGHT - BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 
     @Override
@@ -138,33 +135,32 @@ public class MenuScreen implements Screen, InputProcessor {
 
     // --- InputProcessor methods ---
     @Override
-    public boolean keyDown(int keycode) {
-        return false;
-    }
+    public boolean keyDown(int keycode) { return false; }
 
     @Override
-    public boolean keyUp(int keycode) {
-        return false;
-    }
+    public boolean keyUp(int keycode) { return false; }
 
     @Override
-    public boolean keyTyped(char character) {
-        return false;
-    }
+    public boolean keyTyped(char character) { return false; }
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         // Correct the y-coordinate for the LibGDX origin (bottom-left)
         int correctedY = Gdx.graphics.getHeight() - screenY;
 
-        if (startButton.contains(screenX, correctedY)) {
-            // Start the game when the button is clicked
+        if (bundleButton.contains(screenX, correctedY)) {
+            game.isClassicMode = false;
+            game.startGame();
+            return true;
+        }
+
+        if (classicButton.contains(screenX, correctedY)) {
+            game.isClassicMode = true;
             game.startGame();
             return true;
         }
 
         if (statsButton.contains(screenX, correctedY)) {
-            // Call the method in the Main class to switch to the stats screen
             game.setScreen(statsScreen);
             return true;
         }
@@ -173,27 +169,17 @@ public class MenuScreen implements Screen, InputProcessor {
     }
 
     @Override
-    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
-    }
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
 
     @Override
-    public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false;
-    }
+    public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
 
     @Override
-    public boolean mouseMoved(int screenX, int screenY) {
-        return false;
-    }
+    public boolean mouseMoved(int screenX, int screenY) { return false; }
 
     @Override
-    public boolean scrolled(float amountX, float amountY) {
-        return false;
-    }
+    public boolean scrolled(float amountX, float amountY) { return false; }
 
     @Override
-    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
-        return false;
-    }
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
 }
