@@ -89,6 +89,7 @@ public class GameScreen implements Screen {
 
     // Back to Menu button bounds. Using the same name as before for the quit button for consistency.
     private Rectangle menuButtonBounds;
+    private Rectangle quitButtonBounds;
 
     public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard) {
         this.game = game;
@@ -173,7 +174,18 @@ public class GameScreen implements Screen {
         }
         carrotSpinAnimation = new Animation<TextureRegion>(0.15f, carrotSpinFrames);
 
-        // Initialize the quit/menu button bounds
+        // Initialize the quit button bounds at the top right
+        float quitButtonWidth = 200;
+        float quitButtonHeight = 50;
+        float padding = 20;
+        quitButtonBounds = new Rectangle(
+            Gdx.graphics.getWidth() - quitButtonWidth - padding,
+            Gdx.graphics.getHeight() - quitButtonHeight - padding,
+            quitButtonWidth,
+            quitButtonHeight
+        );
+
+        // Initialize the menu button bounds at the center bottom
         menuButtonBounds = new Rectangle(
             (Gdx.graphics.getWidth() - 250) / 2f,
             20,
@@ -578,15 +590,15 @@ public class GameScreen implements Screen {
     private void drawQuitButton() {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0.5f, 0.1f, 0.1f, 1f);
-        shapeRenderer.rect(menuButtonBounds.x, menuButtonBounds.y, menuButtonBounds.width, menuButtonBounds.height);
+        shapeRenderer.rect(quitButtonBounds.x, quitButtonBounds.y, quitButtonBounds.width, quitButtonBounds.height);
         shapeRenderer.end();
 
         batch.begin();
         keyboardFont.setColor(Color.WHITE);
         String quitText = "QUIT";
         layout.setText(keyboardFont, quitText);
-        float textX = menuButtonBounds.x + (menuButtonBounds.width - layout.width) / 2;
-        float textY = menuButtonBounds.y + (menuButtonBounds.height + layout.height) / 2;
+        float textX = quitButtonBounds.x + (quitButtonBounds.width - layout.width) / 2;
+        float textY = quitButtonBounds.y + (quitButtonBounds.height + layout.height) / 2;
         keyboardFont.draw(batch, quitText, textX, textY);
         batch.end();
     }
@@ -756,23 +768,20 @@ public class GameScreen implements Screen {
 
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-            // Adjust the screenY coordinate for libGDX's inverted Y-axis
             float correctedY = Gdx.graphics.getHeight() - screenY;
 
-            // Check for the menu button press from any state
-            if (menuButtonBounds.contains(screenX, correctedY)) {
-                // If it's a "QUIT" button in the PLAYING state, go to the GAME_OVER screen.
-                if (currentState == GameState.PLAYING) {
-                    currentState = GameState.GAME_OVER;
-                    stateTimer = 0;
-                    stateTime = 0; // Reset animation time for the death animation
-                    return true;
-                }
-                // If it's a "Back to Menu" button in GAME_OVER or WIN_SCREEN states, go to menu.
-                if (currentState == GameState.GAME_OVER || currentState == GameState.WIN_SCREEN) {
-                    game.setScreen(game.menuScreen);
-                    return true;
-                }
+            // Check for the QUIT button press in the PLAYING state
+            if (currentState == GameState.PLAYING && quitButtonBounds.contains(screenX, correctedY)) {
+                currentState = GameState.GAME_OVER;
+                stateTimer = 0;
+                stateTime = 0;
+                return true;
+            }
+
+            // Check for the Back to Menu button press in GAME_OVER or WIN_SCREEN states
+            if ((currentState == GameState.GAME_OVER || currentState == GameState.WIN_SCREEN) && menuButtonBounds.contains(screenX, correctedY)) {
+                game.setScreen(game.menuScreen);
+                return true;
             }
             return false;
         }
