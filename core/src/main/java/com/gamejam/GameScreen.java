@@ -794,6 +794,13 @@ public class GameScreen implements Screen {
             // Store the final time before transitioning, subtracting the animation duration
             this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION - WIN_ANIMATION_DURATION);
 
+            // Check the game mode and increment the correct stat
+            if (gameMode == GameMode.CLASSIC) {
+                playerProfile.getGameStats().incrementClassicsSolved();
+            } else if (gameMode == GameMode.BUNDLE) {
+                playerProfile.getGameStats().incrementBundlesSolved();
+            }
+
             // Now, check and update best times for both modes here, as finalElapsedTime is correct.
             if (gameMode == GameMode.BUNDLE && (playerProfile.getGameStats().getBestTimeBundle() == 0 || this.finalElapsedTime < playerProfile.getGameStats().getBestTimeBundle())) {
                 playerProfile.getGameStats().setBestTimeBundle(this.finalElapsedTime);

@@ -13,6 +13,7 @@ public class GameStats {
     public int totalGuesses; // This now counts all guesses, including failed attempts
     public long totalTimeInSeconds; // Total time spent in game
     public int bundlesSolved;
+    public int classicsSolved;
     public double averageGuessPerWord;
     public int totalGuessesForSolvedWords; // New variable for the average calculation
 
@@ -34,6 +35,7 @@ public class GameStats {
         this.totalTimeInSeconds = 0;
         this.bestWord = "";
         this.bundlesSolved = 0;
+        this.classicsSolved = 0;
         this.averageGuessPerWord = 0;
         this.bestWordGuesses = Integer.MAX_VALUE; // Initialize with a high value
         this.guessesPerWord = new ArrayList<>();
@@ -51,6 +53,8 @@ public class GameStats {
         this.totalGuessesForSolvedWords = 0;
         this.totalTimeInSeconds = 0;
         this.bestWord = "";
+        this.bundlesSolved = 0;
+        this.classicsSolved = 0;
         this.bestWordGuesses = Integer.MAX_VALUE;
         this.guessesPerWord.clear();
         this.bestTimeBundle = 0.0f;
@@ -62,6 +66,20 @@ public class GameStats {
      */
     public void incrementTotalGuesses() {
         this.totalGuesses++;
+    }
+
+    /**
+     * Increments the count for classic games solved.
+     */
+    public void incrementClassicsSolved() {
+        this.classicsSolved++;
+    }
+
+    /**
+     * Increments the count for bundle games solved.
+     */
+    public void incrementBundlesSolved() {
+        this.bundlesSolved++;
     }
 
     /**
@@ -100,8 +118,12 @@ public class GameStats {
         return (double) totalGuessesForSolvedWords / totalWordsSolved;
     }
 
-    public int getBundlesWon() {
+    public int getBundlesSolved() {
         return this.bundlesSolved;
+    }
+
+    public int getClassicsSolved() {
+        return this.classicsSolved;
     }
 
     public String getBestWord() {

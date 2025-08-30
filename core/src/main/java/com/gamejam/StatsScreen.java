@@ -53,6 +53,7 @@ public class StatsScreen implements Screen, InputProcessor {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         float startX = (Gdx.graphics.getWidth()) / 2f - 400;
         float rightStartX = (Gdx.graphics.getWidth()) / 2f + 50;
+        float statsY = Gdx.graphics.getHeight() - 300;
 
         // Draw the title
         batch.begin();
@@ -65,31 +66,33 @@ public class StatsScreen implements Screen, InputProcessor {
         // Draw the stats
         this.font.getData().setScale(0.7f);
         GameStats stats = playerProfile.getGameStats();
-        float statsY = Gdx.graphics.getHeight() - 300;
 
+        // Left side stats
         font.setColor(Color.WHITE);
         font.draw(batch, "Total Words Solved: " + stats.getTotalWordsSolved(), startX, statsY);
-        font.draw(batch, "BUNDLEs Solved: " + stats.getBundlesWon(), startX, statsY - 50);
         if (!Objects.equals(stats.getBestWord(), "")) {
-            font.draw(batch, String.format("Best Word: %s (in %d)", stats.getBestWord(), stats.getBestWordGuesses()), startX, statsY - 100);
+            font.draw(batch, String.format("Best Word: %s (in %d)", stats.getBestWord(), stats.getBestWordGuesses()), startX, statsY - 50);
         } else {
-            font.draw(batch, String.format("Best Word: %s", "N/A"), startX, statsY - 100);
+            font.draw(batch, String.format("Best Word: %s", "N/A"), startX, statsY - 50);
         }
+        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 100);
 
-        font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 150);
+        // Right side stats
+        font.draw(batch, "BUNDLES Solved: " + stats.getBundlesSolved(), rightStartX, statsY);
+        font.draw(batch, "CLASSICs Solved: " + stats.getClassicsSolved(), rightStartX, statsY - 50);
 
-        // Draw the new time stats on the right side
         if (stats.getBestTimeBundle() > 0) {
-            font.draw(batch, String.format("Best Time (BUNDLE): %.2f s", stats.getBestTimeBundle()), rightStartX, statsY);
+            font.draw(batch, String.format("Best Time (BUNDLE): %.2f s", stats.getBestTimeBundle()), rightStartX, statsY - 100);
         } else {
-            font.draw(batch, "Best Time (BUNDLE): N/A", rightStartX, statsY);
+            font.draw(batch, "Best Time (BUNDLE): N/A", rightStartX, statsY - 100);
         }
 
         if (stats.getBestTimeClassic() > 0) {
-            font.draw(batch, String.format("Best Time (CLASSIC): %.2f s", stats.getBestTimeClassic()), rightStartX, statsY - 50);
+            font.draw(batch, String.format("Best Time (CLASSIC): %.2f s", stats.getBestTimeClassic()), rightStartX, statsY - 150);
         } else {
-            font.draw(batch, "Best Time (CLASSIC): N/A", rightStartX, statsY - 50);
+            font.draw(batch, "Best Time (CLASSIC): N/A", rightStartX, statsY - 150);
         }
+
         batch.end();
         this.font.getData().setScale(1f);
         // Draw the back button
