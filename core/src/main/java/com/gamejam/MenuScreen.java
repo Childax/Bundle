@@ -22,6 +22,7 @@ public class MenuScreen implements Screen, InputProcessor {
     private final Main game;
     private final StatsScreen statsScreen;
     private final HowToPlayScreen howToPlayScreen;
+    private final CreditsScreen creditsScreen; // Field for the Credits screen
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
@@ -32,15 +33,17 @@ public class MenuScreen implements Screen, InputProcessor {
     private Rectangle classicButton; // Button for the classic 1-stage CLASSIC mode
     private Rectangle statsButton; // Button for viewing stats
     private Rectangle howToPlayButton; // Button for the How To Play screen
+    private Rectangle creditsButton; // Button for the Credits screen
     private final float BUTTON_WIDTH = 300;
     private final float BUTTON_HEIGHT = 100;
     private final float BUTTON_CORNER_RADIUS = 20;
     private final float BUTTON_SPACING = 30; // Spacing between buttons
 
-    public MenuScreen(Main game, StatsScreen statsScreen, HowToPlayScreen howToPlayScreen) {
+    public MenuScreen(Main game, StatsScreen statsScreen, HowToPlayScreen howToPlayScreen, CreditsScreen creditsScreen) {
         this.game = game;
         this.statsScreen = statsScreen;
         this.howToPlayScreen = howToPlayScreen;
+        this.creditsScreen = creditsScreen;
         this.batch = game.getBatch();
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
@@ -61,10 +64,11 @@ public class MenuScreen implements Screen, InputProcessor {
         // Draw the title
         batch.begin();
         font.setColor(Color.WHITE);
-        layout.setText(font, "MAIN MENU");
-        float titleX = (Gdx.graphics.getWidth() - layout.width) / 2;
-        float titleY = Gdx.graphics.getHeight() - 100;
-        font.draw(batch, "MAIN MENU", titleX, titleY);
+        font.getData().setScale(1.5f);
+        layout.setText(font, "BUNDLE");
+        float titleX = 50;
+        float titleY = Gdx.graphics.getHeight() / 2 + layout.height / 2;
+        font.draw(batch, layout, titleX, titleY);
         batch.end();
 
         // Draw the buttons
@@ -72,6 +76,7 @@ public class MenuScreen implements Screen, InputProcessor {
         drawRoundedButton(classicButton, "CLASSIC");
         drawRoundedButton(howToPlayButton, "HOW TO PLAY");
         drawRoundedButton(statsButton, "VIEW STATS");
+        drawRoundedButton(creditsButton, "CREDITS");
     }
 
     /**
@@ -81,7 +86,7 @@ public class MenuScreen implements Screen, InputProcessor {
      */
     private void drawRoundedButton(Rectangle button, String text) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.valueOf("#4C8BF5"));
+        shapeRenderer.setColor(Color.valueOf("#2A2A2A"));
 
         shapeRenderer.rect(button.x + BUTTON_CORNER_RADIUS, button.y,
             button.width - 2 * BUTTON_CORNER_RADIUS, button.height);
@@ -101,23 +106,26 @@ public class MenuScreen implements Screen, InputProcessor {
 
         batch.begin();
         font.setColor(Color.WHITE);
+        font.getData().setScale(0.8f);
         layout.setText(font, text);
         float buttonTextX = button.x + (button.width - layout.width) / 2;
         float buttonTextY = button.y + (button.height + layout.height) / 2;
         font.draw(batch, text, buttonTextX, buttonTextY);
         batch.end();
+        font.getData().setScale(1.0f);
     }
 
     @Override
     public void resize(int width, int height) {
-        float startX = (width - BUTTON_WIDTH) / 2;
-        float centerOffset = BUTTON_HEIGHT + BUTTON_SPACING;
-        float halfSpacing = BUTTON_SPACING / 2;
+        float startX = (width - BUTTON_WIDTH) - 50;
+        float totalButtonHeight = (BUTTON_HEIGHT * 5) + (BUTTON_SPACING * 4);
+        float startY = (height - totalButtonHeight) / 2;
 
-        bundleButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 + centerOffset + halfSpacing, BUTTON_WIDTH, BUTTON_HEIGHT);
-        classicButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2, BUTTON_WIDTH, BUTTON_HEIGHT);
-        howToPlayButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 - centerOffset - halfSpacing, BUTTON_WIDTH, BUTTON_HEIGHT);
-        statsButton = new Rectangle(startX, Gdx.graphics.getHeight() / 2 - (centerOffset * 2) - BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT);
+        bundleButton = new Rectangle(startX, startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 4, BUTTON_WIDTH, BUTTON_HEIGHT);
+        classicButton = new Rectangle(startX, startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 3, BUTTON_WIDTH, BUTTON_HEIGHT);
+        howToPlayButton = new Rectangle(startX, startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 2, BUTTON_WIDTH, BUTTON_HEIGHT);
+        statsButton = new Rectangle(startX, startY + (BUTTON_HEIGHT + BUTTON_SPACING), BUTTON_WIDTH, BUTTON_HEIGHT);
+        creditsButton = new Rectangle(startX, startY, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 
     @Override
@@ -163,6 +171,11 @@ public class MenuScreen implements Screen, InputProcessor {
 
         if (statsButton.contains(screenX, correctedY)) {
             game.setScreen(statsScreen);
+            return true;
+        }
+
+        if (creditsButton.contains(screenX, correctedY)) {
+            game.setScreen(creditsScreen);
             return true;
         }
 
