@@ -52,6 +52,8 @@ public class StatsScreen implements Screen, InputProcessor {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         float startX = (Gdx.graphics.getWidth()) / 2f - 400;
+        float rightStartX = (Gdx.graphics.getWidth()) / 2f + 50;
+
         // Draw the title
         batch.begin();
         font.setColor(Color.WHITE);
@@ -76,8 +78,18 @@ public class StatsScreen implements Screen, InputProcessor {
 
         font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 150);
 
-        // TODO: Add more stats here
+        // Draw the new time stats on the right side
+        if (stats.getBestTimeBundle() > 0) {
+            font.draw(batch, String.format("Best Time (BUNDLE): %.2f s", stats.getBestTimeBundle()), rightStartX, statsY);
+        } else {
+            font.draw(batch, "Best Time (BUNDLE): N/A", rightStartX, statsY);
+        }
 
+        if (stats.getBestTimeClassic() > 0) {
+            font.draw(batch, String.format("Best Time (CLASSIC): %.2f s", stats.getBestTimeClassic()), rightStartX, statsY - 50);
+        } else {
+            font.draw(batch, "Best Time (CLASSIC): N/A", rightStartX, statsY - 50);
+        }
         batch.end();
         this.font.getData().setScale(1f);
         // Draw the back button

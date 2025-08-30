@@ -35,6 +35,8 @@ public class Main extends Game {
     private HowToPlayScreen howToPlayScreen;
     private CreditsScreen creditsScreen;
 
+    private GameScreen.GameMode gameMode;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -65,7 +67,6 @@ public class Main extends Game {
     /**
      * Resets the game state and transitions to the game screen.
      * The game mode (classic or bundle) is determined by the `isClassicMode` flag.
-     *
      * FIX: The bug was that new game objects (like GameManager) were created, but the
      * old instances were still being used by the GameScreen. This fix ensures that a
      * completely new game state is established every time the game starts.
@@ -73,10 +74,9 @@ public class Main extends Game {
     public void startGame() {
         // Determine the number of stages based on the game mode
         int numStages = isClassicMode ? 1 : 6;
-
+        gameMode = isClassicMode? GameScreen.GameMode.CLASSIC : GameScreen.GameMode.BUNDLE;
         // Create a new GameManager instance for the selected mode.
         gameManager = new GameManager(numStages);
-
         // Reset or re-create the board and keyboard for a clean slate.
         // This is crucial to prevent state from previous games from lingering.
         board = new Board(gameManager);
@@ -85,7 +85,7 @@ public class Main extends Game {
         // Create a new GameScreen instance with the updated game objects.
         // This is safer than trying to reset the existing screen.
         gameScreen = new GameScreen(this, gameManager, board, keyboard, playerProfile);
-
+        gameScreen.setGameMode(gameMode);
         // Transition to the new game screen.
         setScreen(gameScreen);
     }

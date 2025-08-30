@@ -44,7 +44,6 @@ public class GameScreen implements Screen {
     private long startTime;
     // Variable to store the final elapsed time
     private float finalElapsedTime;
-
     // These resources are passed from the Main class
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
@@ -77,7 +76,13 @@ public class GameScreen implements Screen {
         LOSE_SCREEN // The new lose screen state
     }
 
+    public enum GameMode {
+        CLASSIC,
+        BUNDLE
+    }
+
     private GameState currentState = GameState.PLAYING;
+    private GameMode gameMode;
     private float stateTimer = 0.0f;
     // Backspace hold variables
     private boolean isBackspaceHeld = false;
@@ -107,7 +112,6 @@ public class GameScreen implements Screen {
     private Rectangle quitButtonBounds;
     // New texture for the goblin
     private Texture goblinCryingTexture;
-
     public GameScreen(Main game, GameManager gameManager, Board board, Keyboard keyboard, PlayerProfile playerProfile) {
         this.game = game;
         this.gameManager = gameManager;
@@ -788,7 +792,16 @@ public class GameScreen implements Screen {
         if (!gameManager.advanceStage()) {
             gameManager.setFinalWin(true);
             // Store the final time before transitioning, subtracting the animation duration
-            this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
+            this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION - WIN_ANIMATION_DURATION);
+
+            // Now, check and update best times for both modes here, as finalElapsedTime is correct.
+            if (gameMode == GameMode.BUNDLE && (playerProfile.getGameStats().getBestTimeBundle() == 0 || this.finalElapsedTime < playerProfile.getGameStats().getBestTimeBundle())) {
+                playerProfile.getGameStats().setBestTimeBundle(this.finalElapsedTime);
+            }
+            if (gameMode == GameMode.CLASSIC && (playerProfile.getGameStats().getBestTimeClassic() == 0 || this.finalElapsedTime < playerProfile.getGameStats().getBestTimeClassic())) {
+                playerProfile.getGameStats().setBestTimeClassic(this.finalElapsedTime);
+            }
+
             // Transition to the new WIN_SCREEN instead of GAME_OVER
             currentState = GameState.WIN_SCREEN;
             stateTimer = 0;
@@ -846,6 +859,11 @@ public class GameScreen implements Screen {
         }
     }
 
+    // Method to set the game mode
+    public void setGameMode(GameMode mode) {
+        this.gameMode = mode;
+    }
+
     private class GameInputProcessor implements InputProcessor {
         @Override
         public boolean keyDown(int keycode) {
@@ -900,6 +918,7 @@ public class GameScreen implements Screen {
                             playerProfile.getGameStats().onWordSolved(submittedWord, guesses);
                             sessionWordsSolved++;
                             updateSessionBestWord(submittedWord, guesses);
+                            // NOTE: The redundant time-saving logic was removed from here.
                         } else if (gameManager.isGameOver()) {
                             currentRow = board.getCurrentRow();
                             int guesses = 1;

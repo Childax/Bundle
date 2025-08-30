@@ -23,6 +23,10 @@ public class GameStats {
     // Stats for "average guesses per solved word"
     public List<Integer> guessesPerWord;
 
+    // New variables to store best times for BUNDLE and CLASSIC modes
+    public float bestTimeBundle;
+    public float bestTimeClassic;
+
     public GameStats() {
         this.totalWordsSolved = 0;
         this.totalGuesses = 0;
@@ -33,6 +37,8 @@ public class GameStats {
         this.averageGuessPerWord = 0;
         this.bestWordGuesses = Integer.MAX_VALUE; // Initialize with a high value
         this.guessesPerWord = new ArrayList<>();
+        this.bestTimeBundle = 0.0f;
+        this.bestTimeClassic = 0.0f;
     }
 
     /**
@@ -47,6 +53,8 @@ public class GameStats {
         this.bestWord = "";
         this.bestWordGuesses = Integer.MAX_VALUE;
         this.guessesPerWord.clear();
+        this.bestTimeBundle = 0.0f;
+        this.bestTimeClassic = 0.0f;
     }
 
     /**
@@ -106,5 +114,23 @@ public class GameStats {
 
     public int getTotalWordsSolved() {
         return this.totalWordsSolved;
+    }
+
+    // New methods for best time tracking
+
+    public float getBestTimeBundle() {
+        return bestTimeBundle;
+    }
+
+    public void setBestTimeBundle(float bestTimeBundle) {
+        this.bestTimeBundle = bestTimeBundle;
+    }
+
+    public float getBestTimeClassic() {
+        return bestTimeClassic;
+    }
+
+    public void setBestTimeClassic(float bestTimeClassic) {
+        this.bestTimeClassic = bestTimeClassic;
     }
 }
