@@ -2,6 +2,7 @@ package com.gamejam;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -16,6 +17,7 @@ public class Main extends Game {
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
     private BitmapFont keyboardFont;
+    private Preferences preferences;
 
     // Game state objects that will be passed to the screens.
     private GameManager gameManager;
@@ -34,6 +36,7 @@ public class Main extends Game {
     private StatsScreen statsScreen;
     private HowToPlayScreen howToPlayScreen;
     private CreditsScreen creditsScreen;
+    private UsernameScreen usernameScreen;
 
     private GameScreen.GameMode gameMode;
 
@@ -44,25 +47,52 @@ public class Main extends Game {
         font = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 48);
         keyboardFont = FontLoader.loadFont("fonts/HelveticaNeue-BlackCond.otf", 32);
 
-        // Initialize the core game objects
-        // We'll initialize them here, but they will be re-created in startGame()
-        // to ensure a clean state.
-        gameManager = new GameManager(6);
-        board = new Board(gameManager);
-        keyboard = new Keyboard();
+        // Initialize preferences for persistent data storage
+        preferences = Gdx.app.getPreferences("BundlePreferences");
 
-        // Instantiate the player profile here. This ensures it only happens once.
-        // For now, we'll just give it a default name.
-        playerProfile = new PlayerProfile("Childax");
+        // Check if a username is already saved
+        String savedUsername = preferences.getString("username", null);
 
-        // Create the initial screens and set the first one
+        if (savedUsername != null && !savedUsername.isEmpty()) {
+            // A username exists, so initialize the player profile and go to the menu
+            playerProfile = new PlayerProfile(savedUsername);
+            playerProfile.loadGameStats(preferences);
+            howToPlayScreen = new HowToPlayScreen(this);
+            creditsScreen = new CreditsScreen(this);
+            statsScreen = new StatsScreen(this, playerProfile);
+            menuScreen = new MenuScreen(this, statsScreen, howToPlayScreen, creditsScreen);
+            setScreen(menuScreen);
+        } else {
+            // No username exists, show the username screen first
+            usernameScreen = new UsernameScreen(this);
+            setScreen(usernameScreen);
+        }
+    }
+
+    /**
+     * Called by the UsernameScreen to save the username and transition to the main menu.
+     * @param username The username to save.
+     */
+    public void setPlayerUsername(String username) {
+        // Save the username to preferences
+        preferences.putString("username", username);
+        preferences.flush();
+
+        // Initialize the player profile with the new username
+        playerProfile = new PlayerProfile(username);
+        Gdx.app.log("Main", "Username saved: " + username);
+
+        // Initialize all the game screens and set the menu screen
         howToPlayScreen = new HowToPlayScreen(this);
         creditsScreen = new CreditsScreen(this);
         statsScreen = new StatsScreen(this, playerProfile);
         menuScreen = new MenuScreen(this, statsScreen, howToPlayScreen, creditsScreen);
-
         setScreen(menuScreen);
+
+        // Dispose of the username screen as it's no longer needed
+        usernameScreen.dispose();
     }
+
 
     /**
      * Resets the game state and transitions to the game screen.
@@ -95,6 +125,7 @@ public class Main extends Game {
      */
     @Override
     public void dispose() {
+        playerProfile.saveGameStats(preferences);
         super.dispose();
         batch.dispose();
         shapeRenderer.dispose();
@@ -103,6 +134,7 @@ public class Main extends Game {
         if (getScreen() != null) {
             getScreen().dispose();
         }
+
     }
 
     // Getters for shared resources to be used by screens

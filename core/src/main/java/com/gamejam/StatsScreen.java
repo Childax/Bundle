@@ -63,6 +63,10 @@ public class StatsScreen implements Screen, InputProcessor {
         float titleY = Gdx.graphics.getHeight() - 150;
         font.draw(batch, "PLAYER STATS", titleX, titleY);
 
+        // Draw the username
+        font.setColor(Color.WHITE);
+        font.draw(batch, playerProfile.getUsername(), titleX, titleY - 50);
+
         // Draw the stats
         this.font.getData().setScale(0.7f);
         GameStats stats = playerProfile.getGameStats();

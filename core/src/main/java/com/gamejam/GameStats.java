@@ -4,29 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A class to hold and manage game statistics.
- * This class is serializable, making it easy to save and load.
+ * A data class to hold the player's game statistics.
+ * This is a simple POJO (Plain Old Java Object).
  */
 public class GameStats {
     // Basic game stats
-    public int totalWordsSolved;
-    public int totalGuesses; // This now counts all guesses, including failed attempts
-    public long totalTimeInSeconds; // Total time spent in game
-    public int bundlesSolved;
-    public int classicsSolved;
-    public double averageGuessPerWord;
-    public int totalGuessesForSolvedWords; // New variable for the average calculation
+    private int totalWordsSolved;
+    private int totalGuesses;
+    private long totalTimeInSeconds;
+    private int bundlesSolved;
+    private int classicsSolved;
+    private int totalGuessesForSolvedWords;
 
     // Stats for "best word guessed"
-    public String bestWord;
-    public int bestWordGuesses;
-
-    // Stats for "average guesses per solved word"
-    public List<Integer> guessesPerWord;
+    private String bestWord;
+    private int bestWordGuesses;
 
     // New variables to store best times for BUNDLE and CLASSIC modes
-    public float bestTimeBundle;
-    public float bestTimeClassic;
+    private float bestTimeBundle;
+    private float bestTimeClassic;
 
     public GameStats() {
         this.totalWordsSolved = 0;
@@ -36,11 +32,9 @@ public class GameStats {
         this.bestWord = "";
         this.bundlesSolved = 0;
         this.classicsSolved = 0;
-        this.averageGuessPerWord = 0;
-        this.bestWordGuesses = Integer.MAX_VALUE; // Initialize with a high value
-        this.guessesPerWord = new ArrayList<>();
-        this.bestTimeBundle = 0.0f;
-        this.bestTimeClassic = 0.0f;
+        this.bestWordGuesses = Integer.MAX_VALUE;
+        this.bestTimeBundle = Float.MAX_VALUE; // Initialize with a high value for min tracking
+        this.bestTimeClassic = Float.MAX_VALUE; // Initialize with a high value for min tracking
     }
 
     /**
@@ -56,9 +50,8 @@ public class GameStats {
         this.bundlesSolved = 0;
         this.classicsSolved = 0;
         this.bestWordGuesses = Integer.MAX_VALUE;
-        this.guessesPerWord.clear();
-        this.bestTimeBundle = 0.0f;
-        this.bestTimeClassic = 0.0f;
+        this.bestTimeBundle = Float.MAX_VALUE;
+        this.bestTimeClassic = Float.MAX_VALUE;
     }
 
     /**
@@ -89,7 +82,6 @@ public class GameStats {
     public void onWordSolved(String word, int guesses) {
         totalWordsSolved++;
         totalGuessesForSolvedWords += guesses;
-        guessesPerWord.add(guesses);
         updateBestWord(word, guesses);
     }
 
@@ -103,7 +95,10 @@ public class GameStats {
             bestWord = word;
             bestWordGuesses = guesses;
         } else if (guesses == bestWordGuesses) {
-            bestWord = word;
+            // Keep the first word with the best guess
+            if (bestWord.isEmpty()) {
+                bestWord = word;
+            }
         }
     }
 
@@ -118,41 +113,34 @@ public class GameStats {
         return (double) totalGuessesForSolvedWords / totalWordsSolved;
     }
 
-    public int getBundlesSolved() {
-        return this.bundlesSolved;
-    }
+    // Getters and Setters for all fields
+    public int getTotalWordsSolved() { return this.totalWordsSolved; }
+    public void setTotalWordsSolved(int totalWordsSolved) { this.totalWordsSolved = totalWordsSolved; }
 
-    public int getClassicsSolved() {
-        return this.classicsSolved;
-    }
+    public int getTotalGuesses() { return this.totalGuesses; }
+    public void setTotalGuesses(int totalGuesses) { this.totalGuesses = totalGuesses; }
 
-    public String getBestWord() {
-        return this.bestWord;
-    }
+    public long getTotalTimeInSeconds() { return this.totalTimeInSeconds; }
+    public void setTotalTimeInSeconds(long totalTimeInSeconds) { this.totalTimeInSeconds = totalTimeInSeconds; }
 
-    public int getBestWordGuesses() {
-        return this.bestWordGuesses;
-    }
+    public int getBundlesSolved() { return this.bundlesSolved; }
+    public void setBundlesSolved(int bundlesSolved) { this.bundlesSolved = bundlesSolved; }
 
-    public int getTotalWordsSolved() {
-        return this.totalWordsSolved;
-    }
+    public int getClassicsSolved() { return this.classicsSolved; }
+    public void setClassicsSolved(int classicsSolved) { this.classicsSolved = classicsSolved; }
 
-    // New methods for best time tracking
+    public int getTotalGuessesForSolvedWords() { return this.totalGuessesForSolvedWords; }
+    public void setTotalGuessesForSolvedWords(int totalGuessesForSolvedWords) { this.totalGuessesForSolvedWords = totalGuessesForSolvedWords; }
 
-    public float getBestTimeBundle() {
-        return bestTimeBundle;
-    }
+    public String getBestWord() { return this.bestWord; }
+    public void setBestWord(String bestWord) { this.bestWord = bestWord; }
 
-    public void setBestTimeBundle(float bestTimeBundle) {
-        this.bestTimeBundle = bestTimeBundle;
-    }
+    public int getBestWordGuesses() { return this.bestWordGuesses; }
+    public void setBestWordGuesses(int bestWordGuesses) { this.bestWordGuesses = bestWordGuesses; }
 
-    public float getBestTimeClassic() {
-        return bestTimeClassic;
-    }
+    public float getBestTimeBundle() { return bestTimeBundle; }
+    public void setBestTimeBundle(float bestTimeBundle) { this.bestTimeBundle = bestTimeBundle; }
 
-    public void setBestTimeClassic(float bestTimeClassic) {
-        this.bestTimeClassic = bestTimeClassic;
-    }
+    public float getBestTimeClassic() { return bestTimeClassic; }
+    public void setBestTimeClassic(float bestTimeClassic) { this.bestTimeClassic = bestTimeClassic; }
 }

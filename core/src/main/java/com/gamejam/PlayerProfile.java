@@ -1,35 +1,64 @@
 package com.gamejam;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.badlogic.gdx.Preferences;
 
 /**
- * A class to represent a player's profile, including their name and game statistics.
- * This class is designed to be easily serialized and deserialized.
+ * Stores all player-specific data, including their username and game stats.
+ * This class should be a simple data container.
  */
 public class PlayerProfile {
-    private String name;
+    private String username;
     private GameStats gameStats;
 
-    public PlayerProfile(String name) {
-        this.name = name;
+    public PlayerProfile(String username) {
+        this.username = username;
         this.gameStats = new GameStats();
     }
 
-    // Getters and setters for the name
-    public String getName() {
-        return name;
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    // Getter for the GameStats object
     public GameStats getGameStats() {
         return gameStats;
     }
 
-    // You can also add other profile-related methods here, like updating overall stats
-    // or adding an achievement system.
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Loads the game stats from the preferences file.
+     * @param preferences The preferences object to load from.
+     */
+    public void loadGameStats(Preferences preferences) {
+        this.gameStats.setTotalWordsSolved(preferences.getInteger("totalWordsSolved", 0));
+        this.gameStats.setBundlesSolved(preferences.getInteger("bundlesSolved", 0));
+        this.gameStats.setClassicsSolved(preferences.getInteger("classicsSolved", 0));
+        this.gameStats.setBestTimeBundle(preferences.getFloat("bestTimeBundle", Float.MAX_VALUE));
+        this.gameStats.setBestTimeClassic(preferences.getFloat("bestTimeClassic", Float.MAX_VALUE));
+        this.gameStats.setBestWord(preferences.getString("bestWord", ""));
+        this.gameStats.setBestWordGuesses(preferences.getInteger("bestWordGuesses", Integer.MAX_VALUE));
+        // Load the new totalGuesses and totalGuessesForSolvedWords fields
+        this.gameStats.setTotalGuesses(preferences.getInteger("totalGuesses", 0));
+        this.gameStats.setTotalGuessesForSolvedWords(preferences.getInteger("totalGuessesForSolvedWords", 0));
+    }
+
+    /**
+     * Saves the game stats to the preferences file.
+     * @param preferences The preferences object to save to.
+     */
+    public void saveGameStats(Preferences preferences) {
+        preferences.putInteger("totalWordsSolved", this.gameStats.getTotalWordsSolved());
+        preferences.putInteger("bundlesSolved", this.gameStats.getBundlesSolved());
+        preferences.putInteger("classicsSolved", this.gameStats.getClassicsSolved());
+        preferences.putFloat("bestTimeBundle", this.gameStats.getBestTimeBundle());
+        preferences.putFloat("bestTimeClassic", this.gameStats.getBestTimeClassic());
+        preferences.putString("bestWord", this.gameStats.getBestWord());
+        preferences.putInteger("bestWordGuesses", this.gameStats.getBestWordGuesses());
+        // Save the new totalGuesses and totalGuessesForSolvedWords fields
+        preferences.putInteger("totalGuesses", this.gameStats.getTotalGuesses());
+        preferences.putInteger("totalGuessesForSolvedWords", this.gameStats.getTotalGuessesForSolvedWords());
+        preferences.flush();
+    }
 }
