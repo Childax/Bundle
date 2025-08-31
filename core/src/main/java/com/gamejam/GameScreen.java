@@ -874,23 +874,23 @@ public class GameScreen implements Screen {
     private class GameInputProcessor implements InputProcessor {
         @Override
         public boolean keyDown(int keycode) {
-            // DEBUG: Press 'W' to instantly go to the win screen
-            if (keycode == Input.Keys.W) {
-                gameManager.setFinalWin(true);
-                // Store the final time before transitioning
-                GameScreen.this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
-                currentState = GameState.WIN_SCREEN;
-                stateTimer = 0;
-                stateTime = 0;
-                // Iterate through all stage words and add them to the solvedWords list
-                for (String word : gameManager.getStageWords()) {
-                    solvedWords.add(word.toUpperCase());
-                    // CRITICAL FIX: Generate the 'all green' state for each word
-                    TileState[] states = WordChecker.checkWord(word.toUpperCase(), word.toUpperCase());
-                    solvedWordStates.add(states);
-                }
-                return true;
-            }
+//            // DEBUG: Press 'W' to instantly go to the win screen
+//            if (keycode == Input.Keys.W) {
+//                gameManager.setFinalWin(true);
+//                // Store the final time before transitioning
+//                GameScreen.this.finalElapsedTime = Math.max(0, (System.currentTimeMillis() - startTime) / 1000.0f - STAGE_COMPLETE_DURATION);
+//                currentState = GameState.WIN_SCREEN;
+//                stateTimer = 0;
+//                stateTime = 0;
+//                // Iterate through all stage words and add them to the solvedWords list
+//                for (String word : gameManager.getStageWords()) {
+//                    solvedWords.add(word.toUpperCase());
+//                    // CRITICAL FIX: Generate the 'all green' state for each word
+//                    TileState[] states = WordChecker.checkWord(word.toUpperCase(), word.toUpperCase());
+//                    solvedWordStates.add(states);
+//                }
+//                return true;
+//            }
 
             if (currentState == GameState.PLAYING) {
                 if (keycode >= Input.Keys.A && keycode <= Input.Keys.Z) {

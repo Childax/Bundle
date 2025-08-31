@@ -61,4 +61,16 @@ public class PlayerProfile {
         preferences.putInteger("totalGuessesForSolvedWords", this.gameStats.getTotalGuessesForSolvedWords());
         preferences.flush();
     }
+
+    /**
+     * Clears all player data from the preferences and resets the profile.
+     * This is useful for a "start fresh" or "reset profile" feature.
+     * @param preferences The preferences object to clear.
+     */
+    public void resetProfile(Preferences preferences) {
+        preferences.clear();
+        preferences.flush();
+        this.gameStats = new GameStats();
+        this.username = null;
+    }
 }

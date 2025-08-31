@@ -142,4 +142,11 @@ public class Main extends Game {
     public ShapeRenderer getShapeRenderer() { return shapeRenderer; }
     public BitmapFont getFont() { return font; }
     public BitmapFont getKeyboardFont() { return keyboardFont; }
+
+    // Add this method to your Main.java class
+    public void resetAndGoToUsernameScreen() {
+        playerProfile.resetProfile(Gdx.app.getPreferences("BundlePreferences"));
+        usernameScreen = new UsernameScreen(this);
+        setScreen(usernameScreen);
+    }
 }

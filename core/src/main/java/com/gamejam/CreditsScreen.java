@@ -113,7 +113,7 @@ public class CreditsScreen implements Screen {
         font.draw(batch, layout, leftX, leftY);
         leftY -= layout.height + 20;
         font.getData().setScale(0.7f);
-        layout.setText(font, "Music: No Time", Color.WHITE, leftSectionWidth, Align.left, true);
+        layout.setText(font, "FX: yea i got no time bro sorry", Color.WHITE, leftSectionWidth, Align.left, true);
         font.draw(batch, layout, leftX, leftY);
 
         // Right Column (Top and Bottom)
