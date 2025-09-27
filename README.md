@@ -2,6 +2,8 @@
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
+A challenging, multi-stage Word Puzzle Game built using the LibGDX framework. This project delivers a fresh take on the classic 5-letter word guessing format, featuring custom animations and persistent state tracking across stages. A clean, modular structure makes it ideal for study or further development. Mainly developed for 1 TOOO JAM.
+
 This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
 
 ## Platforms
