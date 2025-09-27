@@ -33,7 +33,7 @@ public class StatsScreen implements Screen, InputProcessor {
     private final float BUTTON_WIDTH = 200;
     private final float BUTTON_HEIGHT = 75;
     private final float BUTTON_CORNER_RADIUS = 15;
-    private boolean isConfirmingReset = false; // Flag to show the confirmation dialog
+    private boolean isConfirmingReset = false;
 
     public StatsScreen(Main game, PlayerProfile playerProfile) {
         this.game = game;
@@ -42,7 +42,6 @@ public class StatsScreen implements Screen, InputProcessor {
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
 
-        // Position the buttons
         float backX = (Gdx.graphics.getWidth() - BUTTON_WIDTH) / 2;
         float backY = 50;
 
@@ -62,7 +61,6 @@ public class StatsScreen implements Screen, InputProcessor {
         float rightStartX = (Gdx.graphics.getWidth()) / 2f + 50;
         float statsY = Gdx.graphics.getHeight() - 300;
 
-        // Draw the title
         batch.begin();
         font.setColor(Color.WHITE);
         layout.setText(font, "PLAYER STATS");
@@ -70,15 +68,12 @@ public class StatsScreen implements Screen, InputProcessor {
         float titleY = Gdx.graphics.getHeight() - 150;
         font.draw(batch, "PLAYER STATS", titleX, titleY);
 
-        // Draw the username
         font.setColor(Color.WHITE);
         font.draw(batch, playerProfile.getUsername(), titleX, titleY - 50);
 
-        // Draw the stats
         this.font.getData().setScale(0.7f);
         GameStats stats = playerProfile.getGameStats();
 
-        // Left side stats
         font.setColor(Color.WHITE);
         font.draw(batch, "Total Words Solved: " + stats.getTotalWordsSolved(), startX, statsY);
         if (!Objects.equals(stats.getBestWord(), "")) {
@@ -88,7 +83,6 @@ public class StatsScreen implements Screen, InputProcessor {
         }
         font.draw(batch, String.format("Avg. Guess/Word Solved: %.2f", stats.getAverageGuesses()), startX, statsY - 100);
 
-        // Right side stats
         font.draw(batch, "BUNDLES Solved: " + stats.getBundlesSolved(), rightStartX, statsY);
         font.draw(batch, "CLASSICs Solved: " + stats.getClassicsSolved(), rightStartX, statsY - 50);
 
@@ -107,11 +101,9 @@ public class StatsScreen implements Screen, InputProcessor {
         batch.end();
         this.font.getData().setScale(1f);
 
-        // Draw the back and reset buttons
         drawRoundedButton(backButton, "BACK", Color.valueOf("#4C8BF5"));
         drawRoundedButton(resetButton, "RESET", Color.RED);
 
-        // Draw the confirmation dialog if the flag is set
         if (isConfirmingReset) {
             drawConfirmationDialog();
         }
@@ -152,13 +144,11 @@ public class StatsScreen implements Screen, InputProcessor {
      * Draws a simple confirmation dialog for the reset action.
      */
     private void drawConfirmationDialog() {
-        // Draw a dark overlay to make the dialog stand out
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.7f);
         shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         shapeRenderer.end();
 
-        // Draw the dialog box
         float dialogWidth = 400;
         float dialogHeight = 200;
         float dialogX = (Gdx.graphics.getWidth() - dialogWidth) / 2;
@@ -170,7 +160,6 @@ public class StatsScreen implements Screen, InputProcessor {
         shapeRenderer.rect(dialogBox.x, dialogBox.y, dialogBox.width, dialogBox.height);
         shapeRenderer.end();
 
-        // Position the Yes and No buttons
         float buttonSpacing = 20;
         float buttonsTotalWidth = (BUTTON_WIDTH * 2) + buttonSpacing;
         float buttonsStartX = dialogX + (dialogWidth - buttonsTotalWidth) / 2;
@@ -182,7 +171,6 @@ public class StatsScreen implements Screen, InputProcessor {
         drawRoundedButton(yesButton, "YES", Color.valueOf("#4C8BF5"));
         drawRoundedButton(noButton, "NO", Color.RED);
 
-        // Draw the confirmation text
         batch.begin();
         font.setColor(Color.WHITE);
         layout.setText(font, "Are you sure you want to reset your profile?");

@@ -37,7 +37,6 @@ public class UsernameScreen implements Screen, InputProcessor {
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
 
-        // Position the UI elements
         float centerX = Gdx.graphics.getWidth() / 2f;
         float centerY = Gdx.graphics.getHeight() / 2f;
 
@@ -54,13 +53,11 @@ public class UsernameScreen implements Screen, InputProcessor {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        // Draw background and UI elements
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.WHITE);
         drawRoundedRect(inputBox, 10);
         shapeRenderer.end();
 
-        // Draw continue button
         drawRoundedButton(continueButton, "CONTINUE");
 
         batch.begin();
@@ -68,7 +65,6 @@ public class UsernameScreen implements Screen, InputProcessor {
         layout.setText(font, "ENTER YOUR USERNAME");
         font.draw(batch, layout, Gdx.graphics.getWidth() / 2f - layout.width / 2, Gdx.graphics.getHeight() / 2f + 200);
 
-        // Draw username in the input box
         font.setColor(Color.BLACK);
         layout.setText(font, username.isEmpty() ? "Type here..." : username);
         font.draw(batch, layout, inputBox.x + inputBox.width / 2 - layout.width / 2, inputBox.y + inputBox.height / 2 + layout.height / 2);
@@ -135,7 +131,6 @@ public class UsernameScreen implements Screen, InputProcessor {
     @Override
     public void dispose() { }
 
-    // --- InputProcessor methods ---
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACKSPACE) {
@@ -151,9 +146,8 @@ public class UsernameScreen implements Screen, InputProcessor {
 
     @Override
     public boolean keyTyped(char character) {
-        // Only allow alphanumeric characters and space
         if (Character.isLetterOrDigit(character) || character == ' ') {
-            if (username.length() < 15) { // Limit username length
+            if (username.length() < 15) {
                 username += character;
             }
         }

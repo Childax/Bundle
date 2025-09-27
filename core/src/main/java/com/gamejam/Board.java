@@ -26,7 +26,7 @@ public class Board {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 tiles[r][c] = new Tile();
-                bounceTimers[r][c] = -1.0f; // -1.0 indicates no active animation
+                bounceTimers[r][c] = -1.0f;
             }
         }
     }
@@ -34,7 +34,7 @@ public class Board {
     public void typeLetter(char letter) {
         if (currentCol < cols) {
             tiles[currentRow][currentCol].setLetter(letter);
-            bounceTimers[currentRow][currentCol] = 0.0f; // Start the jump animation
+            bounceTimers[currentRow][currentCol] = 0.0f;
             currentCol++;
         }
     }
@@ -43,7 +43,7 @@ public class Board {
         if (currentCol > 0) {
             currentCol--;
             tiles[currentRow][currentCol].setLetter(' ');
-            bounceTimers[currentRow][currentCol] = -1.0f; // Stop animation if letter is deleted
+            bounceTimers[currentRow][currentCol] = -1.0f;
         }
     }
 
@@ -53,14 +53,13 @@ public class Board {
      * @return The array of TileStates for the guessed word, or null if the guess is invalid.
      */
     public TileState[] submitGuess(int currentRow) {
-        if (currentCol < cols) return null; // not a full row yet
+        if (currentCol < cols) return null;
 
         String guessWord = getSubmittedWord();
         TileState[] result = manager.submitGuess(guessWord, currentRow);
         if (result == null) return null;
 
         for (int c = 0; c < cols; c++) {
-            // Apply the result and start the pop animation for each tile
             tiles[currentRow][c].setState(result[c]);
             bounceTimers[currentRow][c] = 0.0f;
         }
@@ -119,18 +118,16 @@ public class Board {
      * @param alpha The alpha value for fade-in effects.
      */
     public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, float alpha) {
-        float tileSize = 64f;   // pixels per square
+        float tileSize = 64f;
         float gap = 10f;
 
         float boardWidth = cols * tileSize + (cols - 1) * gap;
         float boardHeight = rows * tileSize + (rows - 1) * gap;
 
-        // center horizontally, keep top of board near vertical center
         float startX = (Gdx.graphics.getWidth() - boardWidth) / 2f;
         int bottomMargin = 50;
         float startY = (Gdx.graphics.getHeight() + boardHeight) / 2f + bottomMargin;
 
-        // --- FIRST PASS: Render all tile shapes and borders ---
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
@@ -138,7 +135,6 @@ public class Board {
                 float x = startX + c * (tileSize + gap);
                 float y = startY - r * (tileSize + gap);
 
-                // Update and render animation if it's active
                 float scale = 1.0f;
                 if (bounceTimers[r][c] >= 0.0f) {
                     bounceTimers[r][c] += Gdx.graphics.getDeltaTime();
@@ -151,24 +147,20 @@ public class Board {
                             scale = 1.0f + Interpolation.bounceOut.apply(progress) * 0.15f;
                         }
                     } else {
-                        // Animation is complete, reset timer
                         bounceTimers[r][c] = -1.0f;
                     }
                 }
-                // Call the render method that handles shapes
                 tile.renderShape(shapeRenderer, x, y, tileSize, scale, alpha);
             }
         }
         shapeRenderer.end();
 
-        // --- SECOND PASS: Render all tile letters ---
         batch.begin();
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 Tile tile = tiles[r][c];
                 float x = startX + c * (tileSize + gap);
                 float y = startY - r * (tileSize + gap);
-                // Call the render method that handles text
                 tile.renderText(batch, font, x, y, tileSize, alpha);
             }
         }

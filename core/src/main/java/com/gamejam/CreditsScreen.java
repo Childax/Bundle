@@ -63,12 +63,12 @@ public class CreditsScreen implements Screen {
         batch.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // --- Draw all shapes first ---
+        // Draw all shapes
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         drawRoundedButtonShape(backButton);
         shapeRenderer.end();
 
-        // --- Then draw all text on top ---
+        // Draw text on top
         batch.begin();
         drawRoundedButtonText(backButton, "BACK TO MENU");
         drawCreditsContent();
@@ -95,7 +95,7 @@ public class CreditsScreen implements Screen {
         float leftY = Gdx.graphics.getHeight() - padding - layout.height - 60;
         float leftSectionWidth = halfWidth - padding * 1.5f;
 
-        // Top-Left: Game Creators
+        // Top-Left: Sprites
         font.getData().setScale(1.1f);
         layout.setText(font, "Sprites");
         font.draw(batch, layout, leftX, leftY);
@@ -121,7 +121,7 @@ public class CreditsScreen implements Screen {
         float rightY = Gdx.graphics.getHeight() - padding - layout.height - 60;
         float rightSectionWidth = halfWidth - padding * 1.5f;
 
-        // Top-Right: Art
+        // Top-Right: Special Thanks
         font.getData().setScale(1.1f);
         layout.setText(font, "SPECIAL THANKS");
         font.draw(batch, layout, rightX, rightY - 30);
@@ -130,7 +130,7 @@ public class CreditsScreen implements Screen {
         layout.setText(font, "WORDLE from NYT", Color.WHITE, rightSectionWidth, Align.left, true);
         font.draw(batch, layout, rightX, rightY);
 
-        // Bottom-Right: Special Thanks
+        // Bottom-Right: Creator
         rightY = halfHeight - 20;
         font.getData().setScale(1.1f);
         layout.setText(font, "GUY WHO MADE TS");
@@ -173,7 +173,6 @@ public class CreditsScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // Position the fixed back button
         backButton = new Rectangle(Gdx.graphics.getWidth() - BUTTON_WIDTH - 50, 50, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 

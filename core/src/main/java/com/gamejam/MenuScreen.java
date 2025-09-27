@@ -14,30 +14,27 @@ import com.badlogic.gdx.utils.ScreenUtils;
 /**
  * The main menu screen for the game.
  * This screen handles the buttons for selecting the game mode and viewing stats.
- *
- * MODIFICATION: Added a button to navigate to the new HowToPlayScreen.
  */
 public class MenuScreen implements Screen, InputProcessor {
 
     private final Main game;
     private final StatsScreen statsScreen;
     private final HowToPlayScreen howToPlayScreen;
-    private final CreditsScreen creditsScreen; // Field for the Credits screen
+    private final CreditsScreen creditsScreen;
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
     private final GlyphLayout layout = new GlyphLayout();
 
-    // Button properties
-    private Rectangle bundleButton; // Button for the 6-stage BUNDLE mode
-    private Rectangle classicButton; // Button for the classic 1-stage CLASSIC mode
-    private Rectangle statsButton; // Button for viewing stats
-    private Rectangle howToPlayButton; // Button for the How To Play screen
-    private Rectangle creditsButton; // Button for the Credits screen
+    private Rectangle bundleButton;
+    private Rectangle classicButton;
+    private Rectangle statsButton;
+    private Rectangle howToPlayButton;
+    private Rectangle creditsButton;
     private final float BUTTON_WIDTH = 300;
     private final float BUTTON_HEIGHT = 100;
     private final float BUTTON_CORNER_RADIUS = 20;
-    private final float BUTTON_SPACING = 30; // Spacing between buttons
+    private final float BUTTON_SPACING = 30;
 
     public MenuScreen(Main game, StatsScreen statsScreen, HowToPlayScreen howToPlayScreen, CreditsScreen creditsScreen) {
         this.game = game;
@@ -48,7 +45,6 @@ public class MenuScreen implements Screen, InputProcessor {
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
 
-        // Position the buttons
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
@@ -61,7 +57,6 @@ public class MenuScreen implements Screen, InputProcessor {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        // Draw the title
         batch.begin();
         font.setColor(Color.WHITE);
         font.getData().setScale(1.5f);
@@ -71,7 +66,6 @@ public class MenuScreen implements Screen, InputProcessor {
         font.draw(batch, layout, titleX, titleY);
         batch.end();
 
-        // Draw the buttons
         drawRoundedButton(bundleButton, "BUNDLE");
         drawRoundedButton(classicButton, "CLASSIC");
         drawRoundedButton(howToPlayButton, "HOW TO PLAY");

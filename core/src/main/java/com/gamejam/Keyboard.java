@@ -19,7 +19,6 @@ public class Keyboard {
     private Map<Character, TileState> keyStates = new HashMap<>();
 
     public Keyboard() {
-        // Init all keys as unused
         for (String row : rows) {
             for (char c : row.toCharArray()) {
                 if (Character.isLetter(c)) {
@@ -29,17 +28,10 @@ public class Keyboard {
         }
     }
 
-    /**
-     * Helper method to draw a filled rounded rectangle.
-     * This is necessary because the ShapeRenderer does not have a built-in method
-     * for this purpose.
-     */
     private void drawRoundedRect(ShapeRenderer shapeRenderer, float x, float y, float width, float height, float radius) {
-        // Draw the main body of the rectangle
         shapeRenderer.rect(x + radius, y, width - 2 * radius, height);
         shapeRenderer.rect(x, y + radius, width, height - 2 * radius);
 
-        // Draw the four corner circles
         shapeRenderer.circle(x + radius, y + radius, radius);
         shapeRenderer.circle(x + width - radius, y + radius, radius);
         shapeRenderer.circle(x + radius, y + height - radius, radius);
@@ -50,7 +42,6 @@ public class Keyboard {
         c = Character.toUpperCase(c);
         if (!keyStates.containsKey(c)) return;
 
-        // Don't downgrade GREEN → YELLOW/GRAY
         TileState current = keyStates.get(c);
         if (current == TileState.CORRECT) return;
         if (current == TileState.PRESENT && state == TileState.ABSENT) return;
@@ -63,13 +54,12 @@ public class Keyboard {
         float keyHeight = 64f;
         float spacing = 8f;
         float startY = 50f;
-        float cornerRadius = 8f; // The radius for the rounded corners
+        float cornerRadius = 8f;
         GlyphLayout layout = new GlyphLayout();
 
         for (int r = 0; r < rows.length; r++) {
             String rowStr = rows[r];
 
-            // compute total row width
             float rowWidth = 0f;
             for (int i = 0; i < rowStr.length(); i++) {
                 boolean isEnter = r == 2 && i == 0;
@@ -92,7 +82,6 @@ public class Keyboard {
                 if (isEnter) { keyLabel = "ENTER"; thisWidth = keyWidth*2; }
                 if (isDel)   { keyLabel = "DEL"; thisWidth = keyWidth*2; }
 
-                // key background color
                 Color keyBackgroundColor;
                 if (keyLabel.length() == 1) {
                     TileState state = keyStates.get(keyLabel.charAt(0));
@@ -102,20 +91,18 @@ public class Keyboard {
                         keyBackgroundColor = WordleColors.PRESENT;
                     } else if (state == TileState.ABSENT) {
                         keyBackgroundColor = WordleColors.ABSENT;
-                    } else { // TileState.EMPTY
-                        keyBackgroundColor = Color.valueOf("#949799"); // Darker gray for unused keys
+                    } else {
+                        keyBackgroundColor = Color.valueOf("#949799");
                     }
-                } else { // ENTER/DEL
+                } else {
                     keyBackgroundColor = Color.valueOf("#949799");
                 }
 
-                // draw background with rounded corners
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                 shapeRenderer.setColor(keyBackgroundColor);
                 drawRoundedRect(shapeRenderer, xPos, yPos, thisWidth, keyHeight, cornerRadius);
                 shapeRenderer.end();
 
-                // draw label
                 batch.begin();
                 float scale = keyLabel.length() > 1 ? 0.7f : 1f;
                 font.getData().setScale(scale);
@@ -129,7 +116,6 @@ public class Keyboard {
 
                 xPos += thisWidth + spacing;
 
-                // skip extra letters for multi-letter keys
                 if (isEnter) i += 4;
                 if (isDel) i += 2;
             }

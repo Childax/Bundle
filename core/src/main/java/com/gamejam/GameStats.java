@@ -16,11 +16,9 @@ public class GameStats {
     private int classicsSolved;
     private int totalGuessesForSolvedWords;
 
-    // Stats for "best word guessed"
     private String bestWord;
     private int bestWordGuesses;
 
-    // New variables to store best times for BUNDLE and CLASSIC modes
     private float bestTimeBundle;
     private float bestTimeClassic;
 
@@ -33,8 +31,8 @@ public class GameStats {
         this.bundlesSolved = 0;
         this.classicsSolved = 0;
         this.bestWordGuesses = Integer.MAX_VALUE;
-        this.bestTimeBundle = Float.MAX_VALUE; // Initialize with a high value for min tracking
-        this.bestTimeClassic = Float.MAX_VALUE; // Initialize with a high value for min tracking
+        this.bestTimeBundle = Float.MAX_VALUE;
+        this.bestTimeClassic = Float.MAX_VALUE;
     }
 
     /**
@@ -113,7 +111,6 @@ public class GameStats {
         return (double) totalGuessesForSolvedWords / totalWordsSolved;
     }
 
-    // Getters and Setters for all fields
     public int getTotalWordsSolved() { return this.totalWordsSolved; }
     public void setTotalWordsSolved(int totalWordsSolved) { this.totalWordsSolved = totalWordsSolved; }
 

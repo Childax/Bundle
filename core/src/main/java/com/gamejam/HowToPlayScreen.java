@@ -35,13 +35,11 @@ public class HowToPlayScreen implements Screen {
         this.shapeRenderer = game.getShapeRenderer();
         this.font = game.getFont();
 
-        // Position the back button
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
     public void show() {
-        // Handle input for button clicks
         Gdx.input.setInputProcessor(new com.badlogic.gdx.InputAdapter() {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
@@ -59,17 +57,14 @@ public class HowToPlayScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        // All drawing uses a fixed, non-scrolling camera
         batch.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // --- Draw all shapes first ---
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         drawRoundedButtonShape(backButton);
         drawContentShapes();
         shapeRenderer.end();
 
-        // --- Then draw all text on top ---
         batch.begin();
         drawRoundedButtonText(backButton, "BACK TO MENU");
         drawContentText();
@@ -87,14 +82,12 @@ public class HowToPlayScreen implements Screen {
         float column1X = padding;
         float column2X = Gdx.graphics.getWidth() / 2 + padding / 2;
 
-        // "HOW TO PLAY" title is centered at the top
         font.getData().setScale(1.5f);
         layout.setText(font, "HOW TO PLAY");
         currentYLeft -= layout.height + 40;
         currentYRight -= layout.height + 40;
         font.getData().setScale(0.7f);
 
-        // Wordle Rules (Left Column)
         String rulesText = "Guess the word in 6 tries. After each guess, the color of the tiles will change to show how close your guess was to the word.";
         layout.setText(font, rulesText, Color.WHITE, columnWidth, Align.left, true);
         currentYLeft -= layout.height + 30;
@@ -153,7 +146,7 @@ public class HowToPlayScreen implements Screen {
         float column1X = padding;
         float column2X = Gdx.graphics.getWidth() / 2 + padding / 2;
 
-        // "HOW TO PLAY" title is centered at the top
+        // HOW TO PLAY
         font.setColor(Color.WHITE);
         font.getData().setScale(1.5f);
         layout.setText(font, "HOW TO PLAY");

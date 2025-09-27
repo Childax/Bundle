@@ -16,7 +16,7 @@ public class GameManager {
     private int currentStage;
     private boolean stageSolved;
     private boolean gameOver;
-    private boolean isFinalWin = false; // New property to track the final win state
+    private boolean isFinalWin = false;
 
     public GameManager(int numStages) {
         this.numStages = numStages;
@@ -44,8 +44,6 @@ public class GameManager {
             // Load valid guesses
             FileHandle guessFile = Gdx.files.internal("words/valid-wordle-words.txt");
             validWords = new HashSet<>(Arrays.asList(guessFile.readString().split("\\r?\\n")));
-
-            // Solutions should also be valid guesses
             validWords.addAll(answers);
 
         } catch (Exception e) {
@@ -59,7 +57,6 @@ public class GameManager {
      * Picks new words for the game and resets the game state.
      */
     public void pickNewSolutions() {
-        // Call the reset method here to ensure a clean state before picking new words.
         reset();
 
         this.stageWords = new ArrayList<>();
@@ -87,13 +84,11 @@ public class GameManager {
      * @return The array of TileStates for the guessed word.
      */
     public TileState[] submitGuess(String guess, int currentRow) {
-        // If the game is already over, we shouldn't allow any more guesses.
         if (gameOver) return null;
 
         String solution = stageWords.get(currentStage);
         guess = guess.toLowerCase();
 
-        // Check if the word is in the valid list.
         if (!validWords.contains(guess)) {
             System.out.println("Not in word list!");
             return null;
@@ -101,12 +96,10 @@ public class GameManager {
 
         TileState[] result = WordChecker.checkWord(guess, solution);
 
-        // Check for a win condition
         if (guess.equals(solution)) {
             System.out.println("Stage solved!");
             stageSolved = true;
         } else if (currentRow == 5) {
-            // This is the loss condition: the last guess was incorrect
             gameOver = true;
             System.out.println("You lose!");
         }
@@ -124,29 +117,6 @@ public class GameManager {
         return true;
     }
 
-    public TileState getLetterState(char letter, int guessIndex) {
-        // We'll run a check on the letter, just like WordChecker, but for a single character.
-        String solution = stageWords.get(currentStage);
-
-        // Check for correct position (green).
-        if (letter == solution.charAt(guessIndex)) {
-            return TileState.CORRECT;
-        }
-
-        // Then, check if the letter is present in the word at all (yellow).
-        // This is a simplified check that works for your current WordChecker implementation.
-        if (solution.contains(String.valueOf(letter))) {
-            return TileState.PRESENT;
-        }
-
-        // Otherwise, it's not in the word (gray).
-        return TileState.ABSENT;
-    }
-
-    public TileState[] getGuessState(String guessWord, String solution) {
-        return WordChecker.checkWord(guessWord, solution);
-    }
-
     public boolean isGameOver() {
         return gameOver;
     }
@@ -161,14 +131,6 @@ public class GameManager {
 
     public int getCurrentStage() {
         return currentStage;
-    }
-
-    /**
-     * Checks if the player has won the entire game (all stages completed).
-     * @return true if the game is won, false otherwise.
-     */
-    public boolean isFinalWin() {
-        return isFinalWin;
     }
 
     /**

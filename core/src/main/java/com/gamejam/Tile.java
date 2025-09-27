@@ -1,6 +1,5 @@
 package com.gamejam;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -43,12 +42,10 @@ public class Tile {
      * @param alpha         The alpha value for fade-in effects.
      */
     public void renderShape(ShapeRenderer shapeRenderer, float x, float y, float tileSize, float scale, float alpha) {
-        // --- Calculate scaled dimensions and offsets to center the tile ---
         float scaledSize = tileSize * scale;
         float xOffset = (tileSize - scaledSize) / 2;
         float yOffset = (tileSize - scaledSize) / 2;
 
-        // --- Draw filled square only if the tile state has been updated (submitted) ---
         if (state != TileState.EMPTY) {
             Color color;
             switch (state) {
@@ -62,30 +59,24 @@ public class Tile {
                     color = WordleColors.ABSENT;
                     break;
                 default:
-                    // This case should not be reached with the current game logic,
-                    // but we'll fall back to a transparent color just in case.
                     color = new Color(0, 0, 0, 0);
             }
             shapeRenderer.setColor(color.r, color.g, color.b, alpha);
             shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, scaledSize);
         }
 
-        // --- Draw the border with variable thickness and color ---
         Color borderColor;
         float borderThickness;
 
         if (state == TileState.EMPTY) {
             if (letter != ' ') {
-                // Letter has been typed, but not submitted
                 borderColor = WordleColors.TYPED_OUTLINE;
                 borderThickness = 3f;
             } else {
-                // No letter, empty tile
                 borderColor = WordleColors.DEFAULT_OUTLINE;
                 borderThickness = 2f;
             }
 
-            // Draw the outline using four separate rectangles
             shapeRenderer.setColor(borderColor.r, borderColor.g, borderColor.b, alpha);
             shapeRenderer.rect(x + xOffset, y + yOffset, scaledSize, borderThickness); // Bottom
             shapeRenderer.rect(x + xOffset, y + yOffset + scaledSize - borderThickness, scaledSize, borderThickness); // Top
